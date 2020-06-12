@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PantaGo</string>
+    <string name="go_to_maps">Go to maps</string>
+    <string name="title_activity_maps">Map</string>
 </resources>
