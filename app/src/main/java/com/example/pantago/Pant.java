@@ -4,12 +4,14 @@ public class Pant {
     private String description, image;
     private int quantity;
 
-    public Pant(String description, String image, int quantity){
+    public Pant(String description, int quantity){
         this.description = description;
-        this.image = image;
+        //this.image = image;
         this.quantity = quantity;
     }
+    public Pant(){
 
+    }
     public int getQuantity() {
         return quantity;
     }
