@@ -6,4 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".ClaimActivity">
 
+    <Button
+        android:id="@+id/buttonClaim"
+        android:layout_width="181dp"
+        android:layout_height="57dp"
+        android:background="@drawable/claim_button_shape"
+        android:text="@string/claim_button"
+        android:textColor="#FFFFFF"
+        android:textSize="9pt"
+        tools:layout_editor_absoluteX="115dp"
+        tools:layout_editor_absoluteY="631dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
