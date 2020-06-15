@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "142452597780",
+    "firebase_url": "https://pantago-9485d.firebaseio.com",
+    "project_id": "pantago-9485d",
+    "storage_bucket": "pantago-9485d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:142452597780:android:610e10154ed70950723301",
+        "android_client_info": {
+          "package_name": "com.example.pantago"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "142452597780-7eafmiv1v05qb8v0v7413l2ufof7qiu7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pantago",
+            "certificate_hash": "2ef6529a7245ebdd8dc3aee62223eac081f3964f"
+          }
+        },
+        {
+          "client_id": "142452597780-ci5rqmqto7cbukbvmt7oehgrkpvm57jr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCD6wgdYW0tDM515tQBfF_JtS5GxBx81rQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "142452597780-ci5rqmqto7cbukbvmt7oehgrkpvm57jr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
