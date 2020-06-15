@@ -22,16 +22,17 @@ public class MainActivity extends AppCompatActivity {
         Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, MapsActivity.class);
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
             }
         });
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference ref = database.getReference();
+
         Button createUserBtn = findViewById(R.id.makeUser);
         createUserBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                Pant pant = new Pant("Victor", 4);
+                Pant pant = new Pant("Samle op ude foran døren", 4);
                 ref.child("pants").child(Integer.toString(id)).setValue(pant);
                 Log.i("tag",ref.child("id").getKey());
             }
