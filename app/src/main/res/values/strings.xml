@@ -10,6 +10,7 @@
     <string name="number_of_objects">How many bottles/cans?</string>
     <string name="comment_hint">Comment (Optional)</string>
     <string name="object_label">Amount of bottles/cans:</string>
+    <string name="camera_icon_text">Click to upload your picture</string>
     <!--<string name="facebook_application_id" translatable="false">2685476441730660</string>
     <string name="facebook_login_protocol_scheme" translatable="false">fb2685476441730660</string>
     -->

@@ -1,56 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".UploadActivity"
-    android:orientation="vertical"
-    >
+    android:id="@+id/activity_upload"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:context=".UploadActivity">
+
+
+    <!--
+    <TextView
+        android:id="@+id/camera_icon"
+        android:text="@string/camera_icon_text"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_width="168dp"
+        android:layout_height="176dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="250dp"
+        android:clickable="true"
+        android:background="@android:drawable/ic_menu_camera" />
+-->
 
     <EditText
         android:id="@+id/number_of_objects"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:inputType="number"
-        android:layout_marginLeft="250dp"
-        android:layout_marginBottom="200dp"
-        android:layout_alignParentBottom="true"
-        />
+        android:layout_width="96dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="248dp"
+        android:layout_marginTop="408dp"
+        android:inputType="text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/objects_label"
-        android:layout_width="200dp"
-        android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="175dp"
-        android:layout_marginLeft="75dp"
-        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="76dp"
+        android:layout_marginTop="416dp"
+        android:text="@string/object_label"
         android:textSize="16dp"
-        android:text="@string/object_label"/>
-
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/upload_comment"
-        android:layout_width="302dp"
-        android:layout_height="73dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="468dp"
         android:hint="@string/comment_hint"
         android:inputType="text"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="100dp"
-        android:layout_alignParentBottom="true"
-        />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/buttonUpload"
-        android:layout_width="181dp"
-        android:layout_height="57dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="25dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="68dp"
+        android:layout_marginTop="544dp"
         android:background="@drawable/claim_button_shape"
         android:text="@string/upload_button"
-        android:textColor="#FFFFFF"
-        android:textSize="9pt"
-        android:layout_centerHorizontal="true"/>
+        android:textAlignment="center"
+        android:textColor="#FFFFFFFF"
+        android:textColorHint="#FFFFFF"
+        android:textSize="22sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</RelativeLayout>
+    <SurfaceView
+        android:id="@+id/pictureView"
+        android:layout_width="369dp"
+        android:layout_height="323dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="52dp"
+        android:background="@android:drawable/ic_menu_camera"
+        android:clickable="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

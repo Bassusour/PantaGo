@@ -13,7 +13,7 @@
         android:background="@drawable/claim_button_shape"
         android:text="@string/claim_button"
         android:textColor="#FFFFFF"
-        android:textSize="9pt"
+        android:textSize="22sp"
         tools:layout_editor_absoluteX="115dp"
         tools:layout_editor_absoluteY="631dp" />
 
