@@ -10,4 +10,10 @@
     <string name="number_of_objects">How many bottles/cans?</string>
     <string name="comment_hint">Comment (Optional)</string>
     <string name="object_label">Amount of bottles/cans:</string>
+    <!--<string name="facebook_application_id" translatable="false">2685476441730660</string>
+    <string name="facebook_login_protocol_scheme" translatable="false">fb2685476441730660</string>
+    -->
+    <string name="facebook_app_id">2685476441730660</string>
+    <string name="fb_login_protocol_scheme">fb2685476441730660</string>
+
 </resources>
