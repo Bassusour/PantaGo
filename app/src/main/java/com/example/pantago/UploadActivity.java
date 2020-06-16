@@ -6,7 +6,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -86,16 +88,27 @@ public class UploadActivity extends AppCompatActivity {
                     if(!sAmount.isEmpty()){
                         if(isInteger(sAmount)) {
                             int amount = Integer.parseInt(sAmount);
+                            String comment = commentText.getText().toString();
+                            Log.i(TAG, "in amount filled");
+
+                            Intent intent = getIntent();
+                            double latitude = intent.getDoubleExtra("latitude", 0);
+                            double longitude = intent.getDoubleExtra("longitude", 0);
+                            intent.putExtra("amount",amountText.getText().toString());
+                            intent.putExtra("comment",commentText.getText().toString());
+                            setResult(Activity.RESULT_OK, intent);
+                            finish();
                         }else{
                             Toast toast = Toast.makeText(mContext,"Please insert a number", Toast.LENGTH_SHORT);
                             toast.show();
                         }
-                        String comment = commentText.getText().toString();
-                        Log.i(TAG, "in amount filled");
+
+
+
                     }else{
                         Log.i(TAG, "in toast");
-                       Toast toast = Toast.makeText(mContext,"Please fill amount of bottles/cans", Toast.LENGTH_SHORT);
-                       toast.show();
+                        Toast toast = Toast.makeText(mContext,"Please fill amount of bottles/cans", Toast.LENGTH_SHORT);
+                        toast.show();
                     }
 
                 }catch(Exception e){

@@ -1,14 +1,20 @@
 package com.example.pantago;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.view.Window;
+import android.widget.Button;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -19,6 +25,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -34,6 +42,7 @@ import com.google.android.gms.tasks.Task;
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback {
 
+    private static final int LAUNCH_POST = 1;
     //private static final String TAG = MapsActivityCurrentPlace.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
@@ -59,11 +68,14 @@ public class MapsActivity extends AppCompatActivity
     private static final String KEY_LOCATION = "location";
     // [END maps_current_place_state_keys]
 
+    Button postButton;
 
     // [START maps_current_place_on_create]
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
+        getSupportActionBar().hide();
 
         // [START_EXCLUDE silent]
         // [START maps_current_place_on_create_save_instance_state]
@@ -89,6 +101,7 @@ public class MapsActivity extends AppCompatActivity
         // [END maps_current_place_map_fragment]
         // [END_EXCLUDE]
 
+        postButton = findViewById(R.id.postButton);
     }
     // [END maps_current_place_on_create]
 
@@ -126,28 +139,32 @@ public class MapsActivity extends AppCompatActivity
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+        postButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                setMarkerOnCurrentLocation();
-                System.out.println("Hello");
+            public void onClick(View v) {
+                uploadPant();
             }
         });
 
-
+        /*
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                marker.remove();
-                return false;
+                Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
+
+                startActivity(intent);
+                return true;
             }
         });
+
+         */
 
 
     }
     // [END maps_current_place_on_map_ready]
 
-    void setMarkerOnCurrentLocation() {
+    void uploadPant() {
         try {
             if (locationPermissionGranted) {
                 Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
@@ -158,8 +175,11 @@ public class MapsActivity extends AppCompatActivity
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
                             if (lastKnownLocation != null) {
-                                LatLng pos = new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-                                mMap.addMarker(new MarkerOptions().position(pos).title("Hallo"));
+                                Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
+                                intent.putExtra("latitude", lastKnownLocation.getLatitude());
+                                intent.putExtra("longitude", lastKnownLocation.getLongitude());
+                                startActivityForResult(intent,LAUNCH_POST);
+
                             }
                         } else {
                             //Log.d(TAG, "Current location is null. Using defaults.");
@@ -173,6 +193,24 @@ public class MapsActivity extends AppCompatActivity
             }
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == LAUNCH_POST) {
+            if(resultCode == Activity.RESULT_OK){
+                double latitude = data.getDoubleExtra("latitude", 0);
+                double longitude = data.getDoubleExtra("longitude", 0);
+                String title = data.getStringExtra("amount");
+                String snip = data.getStringExtra("comment");
+                LatLng pos = new LatLng(latitude, longitude);
+                mMap.addMarker(new MarkerOptions().position(pos).title("Adresse: "+ snip).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)).snippet("Antal dåser: "+ title));
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+            }
         }
     }
 
