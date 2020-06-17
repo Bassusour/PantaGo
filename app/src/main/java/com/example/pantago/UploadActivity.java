@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
@@ -18,6 +19,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.view.Window;
 import android.util.Log;
 import android.view.Surface;
@@ -25,9 +27,19 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.io.ByteArrayOutputStream;
 import java.lang.invoke.ConstantCallSite;
 import java.util.Collections;
 import java.util.List;
@@ -38,13 +50,15 @@ public class UploadActivity extends AppCompatActivity {
     private EditText amountText;
     private EditText commentText;
     private TextView cameraText;
-    private SurfaceView pictureView;
+    private ImageView pictureView;
 
     String TAG = "pantaGo";
+    private final int REQUEST_IMAGE_CAPTURE = 1;
 
     private CameraManager cameraManager;
     String[] camList;
     Context mContext = this;
+    private Bitmap bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,28 +70,15 @@ public class UploadActivity extends AppCompatActivity {
         uploadButton = (Button) findViewById(R.id.buttonUpload);
         amountText = (EditText) findViewById(R.id.number_of_objects);
         commentText = (EditText) findViewById(R.id.upload_comment);
-        pictureView = (SurfaceView) findViewById(R.id.pictureView);
-        //cameraText = (TextView) findViewById(R.id.camera_icon)
+        pictureView = (ImageView) findViewById(R.id.pictureView);
 
-       /* cameraText.setOnClickListener(new View.OnClickListener() {
+        pictureView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Open the camera to upload picture
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                    Log.i(TAG, "No camera permission");
-                    return;
-                }else{
-                    try {
-                        cameraManager.openCamera(camList[0], callback, null);
-                    } catch (CameraAccessException e) {
-                        Log.i(TAG, "fucko the cam");
-                    }
-                }
-
+                Intent cam =  new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cam, REQUEST_IMAGE_CAPTURE);
             }
-        });*/
-
-
+        });
 
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,8 +95,44 @@ public class UploadActivity extends AppCompatActivity {
                             Intent intent = getIntent();
                             double latitude = intent.getDoubleExtra("latitude", 0);
                             double longitude = intent.getDoubleExtra("longitude", 0);
+
                             intent.putExtra("amount",amountText.getText().toString());
                             intent.putExtra("comment",commentText.getText().toString());
+
+                            Pant pant = new Pant(comment, amount, latitude, longitude);
+
+                            Log.i(TAG, String.valueOf(pant.getLatitude()));
+                            Log.i(TAG, String.valueOf(pant.getLongitude()));
+
+                            FirebaseDatabase database = FirebaseDatabase.getInstance();
+                            FirebaseStorage storage = FirebaseStorage.getInstance();
+
+
+                            DatabaseReference databaseReference = database.getReference();
+
+                            String pantID = databaseReference.push().getKey();
+                            StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
+
+
+                            databaseReference.child("pants").child(pantID).setValue(pant);
+
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                            byte[] data = baos.toByteArray();
+
+                            UploadTask uploadTask = storageReference.putBytes(data);
+                            uploadTask.addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception exception) {
+                                    Log.i(TAG,"no");
+                                }
+                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    Log.i(TAG,"YES");
+                                }
+                            });
+
                             setResult(Activity.RESULT_OK, intent);
                             finish();
                         }else{
@@ -134,6 +171,16 @@ public class UploadActivity extends AppCompatActivity {
         }
 
         return isValidInteger;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == Activity.RESULT_OK && requestCode == REQUEST_IMAGE_CAPTURE){
+            Bundle extras = data.getExtras();
+            bitmap = (Bitmap) extras.get("data");
+            pictureView.setImageBitmap(bitmap);
+        }
     }
 
 

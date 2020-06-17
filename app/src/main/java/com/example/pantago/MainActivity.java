@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
         Button createUserBtn = findViewById(R.id.makeUser);
         createUserBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                Pant pant = new Pant("Samle op ude foran døren", 4);
-                ref.child("pants").child(Integer.toString(id)).setValue(pant);
+               // Pant pant = new Pant("Samle op ude foran døren", 4);
+                //ref.child("pants").child(Integer.toString(id)).setValue(pant);
                 Log.i("tag",ref.child("id").getKey());
             }
         });
