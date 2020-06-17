@@ -67,6 +67,15 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.password);
         logOutBtn = findViewById(R.id.logoutBtn);
 
+        if(mFirebaseAuth.getCurrentUser()!=null){
+            String userEmail = mFirebaseAuth.getCurrentUser().getEmail().toString();
+            Toast.makeText(LoginActivity.this, "Welcome back " + userEmail,
+                    Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+            startActivity(intent);
+        }
+
+
         //Callbackmanager registers the state of the login
         mCallbackManager = CallbackManager.Factory.create();
         fbLogin.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {

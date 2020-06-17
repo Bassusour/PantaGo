@@ -84,6 +84,8 @@ public class CreateUserActivity extends AppCompatActivity {
                             Toast.makeText(CreateUserActivity.this, "User creation successful.",
                                     Toast.LENGTH_SHORT).show();
                             FirebaseUser user = firebaseAuth.getCurrentUser();
+                            Toast.makeText(CreateUserActivity.this, "Welcome to PantaGo",
+                                    Toast.LENGTH_SHORT).show();
                             updateUI(user);
                         }else{
                             Toast.makeText(CreateUserActivity.this, "Authentication failed.",
