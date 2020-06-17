@@ -10,6 +10,7 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -26,6 +27,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +39,11 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener authStateListener;
     private TextView textViewUser;
     private ImageView image;
-    private LoginButton facebookLoginBtn;
+    private LoginButton fbLogin;
+    private Button loginBtn;
+    private Button logOutBtn;
+    private EditText emailInput;
+    private EditText passwordInput;
     private AccessTokenTracker accessTokenTracker;
     private static final String TAG = "FacebookAuthentication";
 
@@ -51,15 +57,21 @@ public class LoginActivity extends AppCompatActivity {
 
         textViewUser = findViewById(R.id.text_user);
         image = findViewById(R.id.imageView);
-        facebookLoginBtn = findViewById(R.id.login_button);
-        facebookLoginBtn.setPermissions("email", "public_profile");
+        fbLogin = findViewById(R.id.fbLogin);
+        fbLogin.setPermissions("email", "public_profile");
+        loginBtn = findViewById(R.id.loginButton);
+        emailInput = findViewById(R.id.email);
+        passwordInput = findViewById(R.id.password);
+        logOutBtn = findViewById(R.id.logoutBtn);
 
+        //Callbackmanager registers the state of the login
         mCallbackManager = CallbackManager.Factory.create();
-        facebookLoginBtn.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+        fbLogin.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "onSuccess" + loginResult);
                 handleFacebookToken(loginResult.getAccessToken());
+                //Skifte activity
             }
 
             @Override
@@ -73,6 +85,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        //Listener which checks when authenticator changes (login or logout)
         authStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -84,6 +97,8 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         };
+
+        //Checks if signed in or out
         accessTokenTracker = new AccessTokenTracker() {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
@@ -93,6 +108,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
+
+
         Button buttonCreateUser = findViewById(R.id.buttonCreateNewUser);
         buttonCreateUser.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -101,15 +118,62 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        //Login with email and password
+        loginBtn.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                String email = emailInput.getText().toString();
+                String password = passwordInput.getText().toString();
+
+                if(email.length() <= 0 || password.length() <= 0) {
+                    Toast.makeText(LoginActivity.this, "Indtast et input",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                mFirebaseAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    // Sign in success, update UI with the signed-in user's information
+                                    Log.d(TAG, "signInWithEmail:success");
+                                    FirebaseUser user = mFirebaseAuth.getCurrentUser();
+                                    updateUI(user);
+                                    Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    // If sign in fails, display a message to the user.
+                                    Log.w(TAG, "signInWithEmail:failure", task.getException());
+                                    Toast.makeText(LoginActivity.this, "Authentication failed.",
+                                            Toast.LENGTH_SHORT).show();
+                                    updateUI(null);
+                                    // ...
+                                }
+
+                                // ...
+                            }
+                        });
+            }
+        });
+
+        //Logout
+        logOutBtn.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                FirebaseAuth.getInstance().signOut();
+                LoginManager.getInstance().logOut();
+            }
+        });
+
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        //Gives callbackmanager data
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
         super.onActivityResult(requestCode, resultCode, data);
 
     }
 
+    //Checks validity for facebook credentials
     private void handleFacebookToken(AccessToken token) {
         Log.d(TAG, "handleFacebookToken"+token);
 
@@ -148,7 +212,11 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        //Adds listener to firebaseAuth
         mFirebaseAuth.addAuthStateListener(authStateListener);
+        //Gets and updates UI with current user
+        FirebaseUser currentUser = mFirebaseAuth.getCurrentUser();
+        //updateUI(currentUser);
     }
 
     @Override
@@ -160,52 +228,4 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-
-
-    /*
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-
-        mFireBaseAuth
-        callbackManager = CallbackManager.Factory.create();
-
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
-                    @Override
-                    public void onSuccess(LoginResult loginResult) {
-                        // App code
-                    }
-
-                    @Override
-                    public void onCancel() {
-                        // App code
-                    }
-
-                    @Override
-                    public void onError(FacebookException exception) {
-                        // App code
-                    }
-                });
-
-        /*
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        AppEventsLogger.activateApp(this); //
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        \/*
-
-
-        //textViewUser = findViewById(R.id.)
-
-    }
-    */
-
-    /*
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        callbackManager.onActivityResult(requestCode, resultCode, data);
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-     */
 }

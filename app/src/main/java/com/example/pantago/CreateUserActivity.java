@@ -40,11 +40,16 @@ public class CreateUserActivity extends AppCompatActivity {
 
         buttonCreateUser.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
                 String sEmail = email.getText().toString();
                 String sPassword = password.getText().toString();
                 String sPassword2 = password2.getText().toString();
                 if(sEmail.isEmpty()){
                     email.setError("Email required");
+                    return;
+                }
+                if(!sEmail.trim().matches(emailPattern)){
+                    email.setError("Invalid email address");
                     return;
                 }
                 if(sPassword.isEmpty()){
@@ -55,7 +60,7 @@ public class CreateUserActivity extends AppCompatActivity {
                     password2.setError("Password required");
                     return;
                 }
-                if(sPassword.length()<7){
+                if(sPassword.length()<6){
                     password.setError("Password must be longer");
                     return;
                 }
@@ -73,6 +78,8 @@ public class CreateUserActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
                             //Log.d(TAG, "createUserWithEmail:success");
+                            Toast.makeText(CreateUserActivity.this, "User creation successful.",
+                                    Toast.LENGTH_SHORT).show();
                             FirebaseUser user = firebaseAuth.getCurrentUser();
                             updateUI(user);
                         }else{
