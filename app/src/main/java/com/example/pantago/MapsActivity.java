@@ -33,7 +33,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 
 /**
@@ -68,6 +74,9 @@ public class MapsActivity extends AppCompatActivity
     private static final String KEY_LOCATION = "location";
     // [END maps_current_place_state_keys]
 
+    private static DatabaseReference databaseReference;
+    private static StorageReference storageReference;
+
     Button postButton;
 
     // [START maps_current_place_on_create]
@@ -76,6 +85,10 @@ public class MapsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
+
+
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+        storageReference = FirebaseStorage.getInstance().getReference();
 
         // [START_EXCLUDE silent]
         // [START maps_current_place_on_create_save_instance_state]
@@ -104,6 +117,40 @@ public class MapsActivity extends AppCompatActivity
         postButton = findViewById(R.id.postButton);
     }
     // [END maps_current_place_on_create]
+
+    protected void onResume(){
+        super.onResume();
+        databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Pant pant = dataSnapshot.getValue(Pant.class);
+                double latitude = pant.getLatitude();
+                double longitude = pant.getLongitude();
+                LatLng latlng = new LatLng(latitude, longitude);
+                mMap.addMarker(new MarkerOptions().position(latlng));
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     /**
      * Saves the state of the map when the activity is paused.
@@ -322,4 +369,6 @@ public class MapsActivity extends AppCompatActivity
         }
     }
     // [END maps_current_place_update_location_ui]
+
+
 }

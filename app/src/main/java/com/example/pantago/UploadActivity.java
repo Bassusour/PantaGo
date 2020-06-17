@@ -88,53 +88,61 @@ public class UploadActivity extends AppCompatActivity {
                 try{
                     if(!sAmount.isEmpty()){
                         if(isInteger(sAmount)) {
-                            int amount = Integer.parseInt(sAmount);
-                            String comment = commentText.getText().toString();
-                            Log.i(TAG, "in amount filled");
+                            if(bitmap != null){
+                                int amount = Integer.parseInt(sAmount);
+                                String comment = commentText.getText().toString();
+                                Log.i(TAG, "in amount filled");
 
-                            Intent intent = getIntent();
-                            double latitude = intent.getDoubleExtra("latitude", 0);
-                            double longitude = intent.getDoubleExtra("longitude", 0);
+                                Intent intent = getIntent();
+                                double latitude = intent.getDoubleExtra("latitude", 0);
+                                double longitude = intent.getDoubleExtra("longitude", 0);
 
-                            intent.putExtra("amount",amountText.getText().toString());
-                            intent.putExtra("comment",commentText.getText().toString());
+                                intent.putExtra("amount",amountText.getText().toString());
+                                intent.putExtra("comment",commentText.getText().toString());
 
-                            Pant pant = new Pant(comment, amount, latitude, longitude);
+                                Pant pant = new Pant(comment, amount, latitude, longitude);
 
-                            Log.i(TAG, String.valueOf(pant.getLatitude()));
-                            Log.i(TAG, String.valueOf(pant.getLongitude()));
+                                Log.i(TAG, String.valueOf(pant.getLatitude()));
+                                Log.i(TAG, String.valueOf(pant.getLongitude()));
 
-                            FirebaseDatabase database = FirebaseDatabase.getInstance();
-                            FirebaseStorage storage = FirebaseStorage.getInstance();
-
-
-                            DatabaseReference databaseReference = database.getReference();
-
-                            String pantID = databaseReference.push().getKey();
-                            StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
+                                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                                FirebaseStorage storage = FirebaseStorage.getInstance();
 
 
-                            databaseReference.child("pants").child(pantID).setValue(pant);
+                                DatabaseReference databaseReference = database.getReference();
 
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                            byte[] data = baos.toByteArray();
+                                String pantID = databaseReference.push().getKey();
+                                StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
 
-                            UploadTask uploadTask = storageReference.putBytes(data);
-                            uploadTask.addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception exception) {
-                                    Log.i(TAG,"no");
-                                }
-                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    Log.i(TAG,"YES");
-                                }
-                            });
 
-                            setResult(Activity.RESULT_OK, intent);
-                            finish();
+                                databaseReference.child("pants").child(pantID).setValue(pant);
+
+
+
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                byte[] data = baos.toByteArray();
+
+                                UploadTask uploadTask = storageReference.putBytes(data);
+                                uploadTask.addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception exception) {
+                                        Log.i(TAG,"no");
+                                    }
+                                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                        Log.i(TAG,"YES");
+                                    }
+                                });
+
+                                setResult(Activity.RESULT_OK, intent);
+                                finish();
+                            }else{
+                                Toast toast = Toast.makeText(mContext,"Please insert a picture", Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+
                         }else{
                             Toast toast = Toast.makeText(mContext,"Please insert a number", Toast.LENGTH_SHORT);
                             toast.show();
