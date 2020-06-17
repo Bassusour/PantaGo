@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Activity;
@@ -66,6 +67,14 @@ public class UploadActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         Log.i(TAG, "onCreate() called");
         super.onCreate(savedInstanceState);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(UploadActivity.this,
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_IMAGE_CAPTURE);
+        }
         setContentView(R.layout.activity_upload);
         uploadButton = (Button) findViewById(R.id.buttonUpload);
         amountText = (EditText) findViewById(R.id.number_of_objects);
@@ -75,8 +84,19 @@ public class UploadActivity extends AppCompatActivity {
         pictureView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent cam =  new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(cam, REQUEST_IMAGE_CAPTURE);
+
+                if (ContextCompat.checkSelfPermission(mContext,
+                        Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    Intent cam =  new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(cam, REQUEST_IMAGE_CAPTURE);
+                } else {
+                    ActivityCompat.requestPermissions(UploadActivity.this,
+                            new String[]{Manifest.permission.CAMERA},
+                            REQUEST_IMAGE_CAPTURE);
+                }
+
             }
         });
 
