@@ -144,16 +144,20 @@ public class UploadActivity extends AppCompatActivity {
                             }
 
                         }else{
+                            amountText.requestFocus();
+                            amountText.setError("Not a number");
                             Toast toast = Toast.makeText(mContext,"Please insert a number", Toast.LENGTH_SHORT);
-                            toast.show();
+                            //toast.show();
                         }
 
 
 
                     }else{
                         Log.i(TAG, "in toast");
+                        amountText.requestFocus();
+                        amountText.setError("No amount given");
                         Toast toast = Toast.makeText(mContext,"Please fill amount of bottles/cans", Toast.LENGTH_SHORT);
-                        toast.show();
+                        //toast.show();
                     }
 
                 }catch(Exception e){
