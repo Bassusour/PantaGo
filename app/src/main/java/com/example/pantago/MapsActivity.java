@@ -3,6 +3,8 @@ package com.example.pantago;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -33,6 +35,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -250,10 +256,25 @@ public class MapsActivity extends AppCompatActivity
             if(resultCode == Activity.RESULT_OK){
                 double latitude = data.getDoubleExtra("latitude", 0);
                 double longitude = data.getDoubleExtra("longitude", 0);
-                String title = data.getStringExtra("amount");
-                String snip = data.getStringExtra("comment");
+
+                String address = "";
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                    String thoroughfare = addresses.get(0).getThoroughfare();
+                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
+                    String city = addresses.get(0).getSubLocality();
+                    String postalCode = addresses.get(0).getPostalCode();
+                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String snip = data.getStringExtra("amount");
                 LatLng pos = new LatLng(latitude, longitude);
-                mMap.addMarker(new MarkerOptions().position(pos).title("Adresse: "+ snip).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)).snippet("Antal dåser: "+ title));
+                mMap.addMarker(new MarkerOptions().position(pos).title(address)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                        .snippet("Antal pant: "+ snip));
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
@@ -369,6 +390,4 @@ public class MapsActivity extends AppCompatActivity
         }
     }
     // [END maps_current_place_update_location_ui]
-
-
 }
