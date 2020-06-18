@@ -1,9 +1,13 @@
 package com.example.pantago;
 
+import com.google.android.gms.maps.model.Marker;
+
 public class Pant {
     private String description, image;
     private int quantity;
     private double latitude,longitude;
+    private String key;
+    private String markerID;
 
     public Pant(String description, int quantity, double latitude, double longitude){
         this.description = description;
@@ -32,5 +36,12 @@ public class Pant {
 
     public double getLongitude() { return longitude; }
 
+    public void setPantKey(String key){ this.key = key; }
+
+    public String getPantKey(){ return key; }
+
+    public void setPantMarkerID(String markerID){ this.markerID = markerID; }
+
+    public String getPantMarkerID(){ return markerID; }
 
 }

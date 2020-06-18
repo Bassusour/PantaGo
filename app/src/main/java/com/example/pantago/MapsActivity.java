@@ -60,6 +60,8 @@ public class MapsActivity extends AppCompatActivity
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
 
+    private String id;
+
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient fusedLocationProviderClient;
 
@@ -81,6 +83,7 @@ public class MapsActivity extends AppCompatActivity
     private static StorageReference storageReference;
 
     ArrayList<Marker> markers;
+    ArrayList<Pant> pants;
 
     Button postButton;
     private Geocoder geocoder;
@@ -106,6 +109,7 @@ public class MapsActivity extends AppCompatActivity
         setContentView(R.layout.activity_maps);
 
         markers = new ArrayList<Marker>();
+        pants = new ArrayList<Pant>();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -140,6 +144,9 @@ public class MapsActivity extends AppCompatActivity
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 markers.add(mark);
+                pants.add(pant);
+                Log.i(TAG, "Resumed");
+                Log.i(TAG, String.valueOf(markers.size()));
             }
 
             @Override
@@ -149,7 +156,15 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                for (int i = 0; i < markers.size(); i++)  {
+                    System.out.println(markers.get(i).getId() + " hello theo");
+                    if (id.equals(markers.get(i).getId())) {
+                        markers.get(i).remove();
+                        pants.remove(i);
+                        markers.remove(i);
 
+                    }
+                }
             }
 
             @Override
@@ -364,12 +379,11 @@ public class MapsActivity extends AppCompatActivity
         }
         if (requestCode == LAUNCH_CLAIM) {
             if(resultCode == Activity.RESULT_OK){
-                String id = data.getStringExtra("id");
+                id = data.getStringExtra("id");
                 for (int i = 0; i < markers.size(); i++)  {
                     System.out.println(markers.get(i).getId() + " hello theo");
                    if (id.equals(markers.get(i).getId())) {
-                       markers.get(i).remove();
-                       markers.remove(i);
+                       databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
                    }
                 }
             }
