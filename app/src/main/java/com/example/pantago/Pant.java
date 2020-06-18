@@ -8,6 +8,7 @@ public class Pant {
     private double latitude,longitude;
     private String key;
     private String markerID;
+    Marker marker;
 
     public Pant(String description, int quantity, double latitude, double longitude){
         this.description = description;

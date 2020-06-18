@@ -10,7 +10,6 @@ import android.location.Location;
 import android.os.Bundle;
 
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -28,7 +27,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -38,11 +36,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
+
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -144,7 +140,9 @@ public class MapsActivity extends AppCompatActivity
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 markers.add(mark);
+                pant.marker = mark;
                 pants.add(pant);
+
                 Log.i(TAG, "Resumed");
                 Log.i(TAG, String.valueOf(markers.size()));
             }
@@ -156,15 +154,14 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                for (int i = 0; i < markers.size(); i++)  {
-                    System.out.println(markers.get(i).getId() + " hello theo");
-                    if (id.equals(markers.get(i).getId())) {
-                        markers.get(i).remove();
+                Log.i(TAG,dataSnapshot.getKey());
+                for (int i = 0; i < pants.size(); i++) {
+                    if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) {
+                        pants.get(i).marker.remove();
                         pants.remove(i);
-                        markers.remove(i);
-
                     }
                 }
+
             }
 
             @Override
@@ -379,12 +376,21 @@ public class MapsActivity extends AppCompatActivity
         }
         if (requestCode == LAUNCH_CLAIM) {
             if(resultCode == Activity.RESULT_OK){
-                id = data.getStringExtra("id");
+                String id = data.getStringExtra("id");
+                /*
                 for (int i = 0; i < markers.size(); i++)  {
                     System.out.println(markers.get(i).getId() + " hello theo");
-                   if (id.equals(markers.get(i).getId())) {
-                       databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                   }
+                    if (id.equals(markers.get(i).getId())) {
+                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
+                    }
+                }
+
+                 */
+                for (int i = 0; i < pants.size(); i++) {
+                    if (id.equals(pants.get(i).marker.getId())) {
+                        Log.i(TAG, pants.get(i).getPantKey());
+                        databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
+                    }
                 }
             }
             if (resultCode == Activity.RESULT_CANCELED) {
