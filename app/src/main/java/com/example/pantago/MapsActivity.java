@@ -1,5 +1,6 @@
 package com.example.pantago;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -187,15 +188,6 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
-        storageReference.child("Pictures/" + dataSnapshot.getKey() + ".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                Log.i(TAG, "pls");
-                pantlist.add(new PantListObject(pant, map, getDistance(latitude, longitude, lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));
-                Log.i(TAG, Integer.toString(pantlist.size()));
-            }
-        });
     }
 
 
@@ -263,7 +255,7 @@ public class MapsActivity extends AppCompatActivity
                         Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
                         intent.putExtra("latitude", lastKnownLocation.getLatitude());
                         intent.putExtra("longitude", lastKnownLocation.getLongitude());
-                        startActivityForResult(intent,LAUNCH_POST);
+                        startActivityForResult(intent, LAUNCH_POST);
                     }
                 });
             }
@@ -297,9 +289,10 @@ public class MapsActivity extends AppCompatActivity
                 });
             }
         });
+    }
 
 
-/
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
