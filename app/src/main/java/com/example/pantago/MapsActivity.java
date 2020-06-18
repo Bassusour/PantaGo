@@ -10,6 +10,7 @@ import android.location.Location;
 import android.os.Bundle;
 
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -17,9 +18,11 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -55,6 +58,8 @@ public class MapsActivity extends AppCompatActivity
     private static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
+    private ActionBarDrawerToggle mToggle;
+    private DrawerLayout mDrawerLayout;
 
     private String id;
 
@@ -88,9 +93,20 @@ public class MapsActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
         mContext = this;
-        requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
-        getSupportActionBar().hide();
+
+
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
+        if(mDrawerLayout == null){
+            Log.e(TAG,"mDraweLayout is null");
+        }
+        mDrawerLayout.addDrawerListener(mToggle);
+        mToggle.syncState();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
 
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
 
@@ -101,8 +117,6 @@ public class MapsActivity extends AppCompatActivity
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-
-        setContentView(R.layout.activity_maps);
 
         markers = new ArrayList<Marker>();
         pants = new ArrayList<Pant>();
@@ -175,6 +189,8 @@ public class MapsActivity extends AppCompatActivity
             }
         });
     }
+
+    //////////////////////////////////////////////////////////////////////////////////
 
     protected void onResume(){
         super.onResume();
@@ -506,5 +522,14 @@ public class MapsActivity extends AppCompatActivity
             Log.e("Exception: %s", e.getMessage());
         }
     }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(mToggle.onOptionsItemSelected(item)){
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     // [END maps_current_place_update_location_ui]
 }
