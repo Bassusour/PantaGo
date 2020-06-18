@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
@@ -42,6 +43,8 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -55,11 +58,14 @@ public class MapsActivity extends AppCompatActivity
 
     private static final int LAUNCH_POST = 1;
     private static final int LAUNCH_CLAIM = 2;
+    private static final int LAUNCH_REMOVE = 3;
     private static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
     private ActionBarDrawerToggle mToggle;
     private DrawerLayout mDrawerLayout;
+
+    FirebaseAuth firebaseAuth;
 
     private String id;
 
@@ -96,7 +102,7 @@ public class MapsActivity extends AppCompatActivity
         setContentView(R.layout.activity_maps);
         mContext = this;
 
-
+        firebaseAuth = FirebaseAuth.getInstance();
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
         mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
@@ -117,6 +123,8 @@ public class MapsActivity extends AppCompatActivity
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
+
+
 
         markers = new ArrayList<Marker>();
         pants = new ArrayList<Pant>();
@@ -155,6 +163,13 @@ public class MapsActivity extends AppCompatActivity
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 markers.add(mark);
                 pant.marker = mark;
+                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(true);
+                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(false);
+                }else{
+                    pant.marker.setVisible(true);
+                }*/
                 pants.add(pant);
 
                 Log.i(TAG, "Resumed");
@@ -163,7 +178,14 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
+                Pant pant = dataSnapshot.getValue(Pant.class);
+               /* if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(true);
+                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(false);
+                }else{
+                    pant.marker.setVisible(true);
+                }*/
             }
 
             @Override
@@ -175,6 +197,14 @@ public class MapsActivity extends AppCompatActivity
                         pants.remove(i);
                     }
                 }
+                Pant pant = dataSnapshot.getValue(Pant.class);
+                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(true);
+                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(false);
+                }else{
+                    pant.marker.setVisible(true);
+                }*/
 
             }
 
@@ -189,8 +219,6 @@ public class MapsActivity extends AppCompatActivity
             }
         });
     }
-
-    //////////////////////////////////////////////////////////////////////////////////
 
     protected void onResume(){
         super.onResume();
@@ -329,14 +357,28 @@ public class MapsActivity extends AppCompatActivity
                 fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
-                        lastKnownLocation = location;
-                        Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
-                        intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
-                        intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
-                        intent.putExtra("longitudeMarker", marker.getPosition().longitude);
-                        intent.putExtra("latitudeMarker", marker.getPosition().latitude);
-                        intent.putExtra("id", marker.getId());
-                        startActivityForResult(intent, LAUNCH_CLAIM);
+                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                        Pant pant = new Pant();
+                        for (int i = 0; i < pants.size(); i++) {
+                            if (pants.get(i).marker.getId().equals(marker.getId())) {
+                                pant = pants.get(i);
+                            }
+                        }
+                        if(currentUser.getUid().equals(pant.getOwnerUID())){
+                            Log.i(TAG, pant.getOwnerUID());
+                            Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
+                            intent.putExtra("id", marker.getId());
+                            startActivityForResult(intent, LAUNCH_REMOVE);
+                        }else {
+                            lastKnownLocation = location;
+                            Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
+                            intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
+                            intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
+                            intent.putExtra("longitudeMarker", marker.getPosition().longitude);
+                            intent.putExtra("latitudeMarker", marker.getPosition().latitude);
+                            intent.putExtra("id", marker.getId());
+                            startActivityForResult(intent, LAUNCH_CLAIM);
+                        }
                     }
                 });
             }
@@ -391,6 +433,34 @@ public class MapsActivity extends AppCompatActivity
 
         }
         if (requestCode == LAUNCH_CLAIM) {
+            if(resultCode == Activity.RESULT_OK){
+                String id = data.getStringExtra("id");
+                /*
+                for (int i = 0; i < markers.size(); i++)  {
+                    System.out.println(markers.get(i).getId() + " hello theo");
+                    if (id.equals(markers.get(i).getId())) {
+                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
+                    }
+                }
+
+                 */
+                for (int i = 0; i < pants.size(); i++) {
+                    if (id.equals(pants.get(i).marker.getId())) {
+                        Log.i(TAG, pants.get(i).getPantKey());
+                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                        pants.get(i).setClaimerUID(currentUser.getUid());
+                        //pants.get(i).setClaimed(true);
+                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
+                    }
+                }
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+            }
+
+        }
+
+        if (requestCode == LAUNCH_REMOVE) {
             if(resultCode == Activity.RESULT_OK){
                 String id = data.getStringExtra("id");
                 /*

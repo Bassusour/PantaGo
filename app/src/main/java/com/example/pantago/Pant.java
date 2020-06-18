@@ -9,6 +9,9 @@ public class Pant {
     private String key;
     private String markerID;
     Marker marker;
+    private String ownerUID;
+    private String claimerUID;
+    private boolean claimed;
 
     public Pant(String description, int quantity, double latitude, double longitude){
         this.description = description;
@@ -45,4 +48,15 @@ public class Pant {
 
     public String getPantMarkerID(){ return markerID; }
 
+    public String getOwnerUID() { return ownerUID; }
+
+    public void setOwnerUID(String UID) { this.ownerUID = UID; }
+
+    public String getClaimerUID() { return claimerUID; }
+
+    public void setClaimerUID(String UID) { this.claimerUID = UID; }
+
+    public boolean getClaimed() { return claimed; }
+
+    public void setClaimed(boolean claimed) { this.claimed = claimed; }
 }
