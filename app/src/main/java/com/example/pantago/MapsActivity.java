@@ -83,6 +83,7 @@ public class MapsActivity extends AppCompatActivity
     ArrayList<Marker> markers;
 
     Button postButton;
+    private Geocoder geocoder;
     private MapsActivity mContext;
 
     @Override
@@ -91,6 +92,8 @@ public class MapsActivity extends AppCompatActivity
         mContext = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
+
+        geocoder = new Geocoder(this, getResources().getConfiguration().locale);
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -117,12 +120,26 @@ public class MapsActivity extends AppCompatActivity
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 double latitude = pant.getLatitude();
                 double longitude = pant.getLongitude();
-                LatLng latlng = new LatLng(latitude, longitude);
 
-                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                String address = "";
+
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                    String thoroughfare = addresses.get(0).getThoroughfare();
+                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
+                    String city = addresses.get(0).getLocality();
+                    String postalCode = addresses.get(0).getPostalCode();
+                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                LatLng latlng = new LatLng(latitude, longitude);
+                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng)
+                        .title(address)
+                        .snippet("Antal pant: " + pant.getQuantity())
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 markers.add(mark);
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
             }
 
             @Override
@@ -156,12 +173,30 @@ public class MapsActivity extends AppCompatActivity
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 double latitude = pant.getLatitude();
                 double longitude = pant.getLongitude();
+
+                String address = "";
+
+                try {
+                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                    String thoroughfare = addresses.get(0).getThoroughfare();
+                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
+                    String city = addresses.get(0).getLocality();
+                    String postalCode = addresses.get(0).getPostalCode();
+                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 LatLng latlng = new LatLng(latitude, longitude);
 
                 Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())));
                 markers.add(mark);
                 Log.i(TAG, "Resumed");
                 Log.i(TAG, String.valueOf(markers.size()));
+                mMap.addMarker(new MarkerOptions().position(latlng)
+                        .title(address)
+                        .snippet("Antal pant: " + pant.getQuantity())
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
             }
 
             @Override
@@ -185,7 +220,7 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
-         */
+        */
     }
 
     /**
@@ -307,7 +342,7 @@ public class MapsActivity extends AppCompatActivity
                     List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
                     String thoroughfare = addresses.get(0).getThoroughfare();
                     String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getSubLocality();
+                    String city = addresses.get(0).getLocality();
                     String postalCode = addresses.get(0).getPostalCode();
                     address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
                 } catch (IOException e) {
