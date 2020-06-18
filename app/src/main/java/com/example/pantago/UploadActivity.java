@@ -193,16 +193,13 @@ public class UploadActivity extends AppCompatActivity {
         try
         {
             Integer.parseInt(s);
-
             // s is a valid integer
-
             isValidInteger = true;
         }
         catch (NumberFormatException ex)
         {
             // s is not an integer
         }
-
         return isValidInteger;
     }
 

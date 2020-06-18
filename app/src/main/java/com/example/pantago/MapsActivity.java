@@ -1,9 +1,10 @@
 package com.example.pantago;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -20,6 +21,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -27,6 +31,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -37,8 +42,10 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Locale;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -81,9 +88,12 @@ public class MapsActivity extends AppCompatActivity
     ArrayList<Marker> markers;
     ArrayList<Pant> pants;
 
+    FragmentManager fragmentManager;
+
     Button postButton;
     private Geocoder geocoder;
     private MapsActivity mContext;
+    List<PantListObject> pantlist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +101,7 @@ public class MapsActivity extends AppCompatActivity
         mContext = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
+        fragmentManager = getSupportFragmentManager();
 
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
 
@@ -113,6 +124,8 @@ public class MapsActivity extends AppCompatActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
+        pantlist = new ArrayList<PantListObject>();
         postButton = findViewById(R.id.postButton);
         databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
             @Override
@@ -129,7 +142,7 @@ public class MapsActivity extends AppCompatActivity
                     String subThoroughfare = addresses.get(0).getSubThoroughfare();
                     String city = addresses.get(0).getLocality();
                     String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
+                    address = thoroughfare + " " + subThoroughfare + ", " + postalCode + " " + city;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -154,7 +167,7 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Log.i(TAG,dataSnapshot.getKey());
+                Log.i(TAG, dataSnapshot.getKey());
                 for (int i = 0; i < pants.size(); i++) {
                     if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) {
                         pants.get(i).marker.remove();
@@ -174,66 +187,25 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
+        storageReference.child("Pictures/" + dataSnapshot.getKey() + ".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Log.i(TAG, "pls");
+                pantlist.add(new PantListObject(pant, map, getDistance(latitude, longitude, lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())));
+                Log.i(TAG, Integer.toString(pantlist.size()));
+            }
+        });
     }
+
 
     protected void onResume(){
         super.onResume();
-        /*
-        databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                double latitude = pant.getLatitude();
-                double longitude = pant.getLongitude();
-
-                String address = "";
-
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    String thoroughfare = addresses.get(0).getThoroughfare();
-                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                LatLng latlng = new LatLng(latitude, longitude);
-
-                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())));
-                markers.add(mark);
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
-                mMap.addMarker(new MarkerOptions().position(latlng)
-                        .title(address)
-                        .snippet("Antal pant: " + pant.getQuantity())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        */
     }
+
+
+
+
 
     /**
      * Saves the state of the map when the activity is paused.
@@ -326,25 +298,13 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
-        /*
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.remove();
-                return false;
-            }
-        });
-        */
 
-
-    }
-
+/
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LAUNCH_POST) {
             if(resultCode == Activity.RESULT_OK){
-                /*
                 double latitude = data.getDoubleExtra("latitude", 0);
                 double longitude = data.getDoubleExtra("longitude", 0);
 
@@ -354,7 +314,7 @@ public class MapsActivity extends AppCompatActivity
                     List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
                     String thoroughfare = addresses.get(0).getThoroughfare();
                     String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
+                    String city = addresses.get(0).getSubLocality();
                     String postalCode = addresses.get(0).getPostalCode();
                     address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
                 } catch (IOException e) {
@@ -363,11 +323,9 @@ public class MapsActivity extends AppCompatActivity
 
                 String snip = data.getStringExtra("amount");
                 LatLng pos = new LatLng(latitude, longitude);
-                Marker mark = mMap.addMarker(new MarkerOptions().position(pos).title(address)
+                mMap.addMarker(new MarkerOptions().position(pos).title(address)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
                         .snippet("Antal pant: "+ snip));
-                markers.add(mark);
-                */
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
@@ -403,6 +361,7 @@ public class MapsActivity extends AppCompatActivity
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
+    // [START maps_current_place_get_device_location]
     private void getDeviceLocation() {
         /*
          * Get the best and most recent location of the device, which may be null in rare
@@ -507,4 +466,18 @@ public class MapsActivity extends AppCompatActivity
         }
     }
     // [END maps_current_place_update_location_ui]
+
+   public static double getDistance(double lat1, double lon1, double lat2, double lon2){
+        double r = 6371000;
+        double phi1 = lat1 * Math.PI/180;
+        double phi2 = lat2 * Math.PI/180;
+        double deltaPhi = (lat2 -lat1) * Math.PI/180;
+        double deltaLambda = (lon2-lon1) * Math.PI/180;
+
+        double a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                        Math.sin(deltaLambda/2)* Math.sin(deltaLambda/2);
+       double c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        return r*c;
+    }
 }
