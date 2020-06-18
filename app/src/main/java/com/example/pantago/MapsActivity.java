@@ -1,5 +1,6 @@
 package com.example.pantago;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -34,8 +35,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -47,18 +51,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-
-/**
- * An activity that displays a map showing the place at the device's current location.
- */
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback {
 
     private static final int LAUNCH_POST = 1;
-    //private static final String TAG = MapsActivityCurrentPlace.class.getSimpleName();
+    private static final int LAUNCH_CLAIM = 2;
+    private static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
-
 
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -74,58 +74,43 @@ public class MapsActivity extends AppCompatActivity
     // location retrieved by the Fused Location Provider.
     private Location lastKnownLocation;
 
-    // Keys for storing activity state.
-    // [START maps_current_place_state_keys]
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
-    // [END maps_current_place_state_keys]
 
     private static DatabaseReference databaseReference;
     private static StorageReference storageReference;
 
-    Button postButton;
+    ArrayList<Marker> markers;
 
-    // [START maps_current_place_on_create]
+    Button postButton;
+    private MapsActivity mContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
-
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
         storageReference = FirebaseStorage.getInstance().getReference();
 
-        // [START_EXCLUDE silent]
-        // [START maps_current_place_on_create_save_instance_state]
-        // Retrieve location and camera position from saved instance state.
         if (savedInstanceState != null) {
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-        // [END maps_current_place_on_create_save_instance_state]
-        // [END_EXCLUDE]
 
-        // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_maps);
 
-        // Construct a FusedLocationProviderClient.
+        markers = new ArrayList<Marker>();
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Build the map.
-        // [START maps_current_place_map_fragment]
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        // [END maps_current_place_map_fragment]
-        // [END_EXCLUDE]
 
         postButton = findViewById(R.id.postButton);
-    }
-    // [END maps_current_place_on_create]
-
-    protected void onResume(){
-        super.onResume();
         databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -133,7 +118,11 @@ public class MapsActivity extends AppCompatActivity
                 double latitude = pant.getLatitude();
                 double longitude = pant.getLongitude();
                 LatLng latlng = new LatLng(latitude, longitude);
-                mMap.addMarker(new MarkerOptions().position(latlng));
+
+                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                markers.add(mark);
+                Log.i(TAG, "Resumed");
+                Log.i(TAG, String.valueOf(markers.size()));
             }
 
             @Override
@@ -156,6 +145,47 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    protected void onResume(){
+        super.onResume();
+        /*
+        databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Pant pant = dataSnapshot.getValue(Pant.class);
+                double latitude = pant.getLatitude();
+                double longitude = pant.getLongitude();
+                LatLng latlng = new LatLng(latitude, longitude);
+
+                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())));
+                markers.add(mark);
+                Log.i(TAG, "Resumed");
+                Log.i(TAG, String.valueOf(markers.size()));
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+         */
     }
 
     /**
@@ -196,7 +226,56 @@ public class MapsActivity extends AppCompatActivity
         postButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uploadPant();
+
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        lastKnownLocation = location;
+                        Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
+                        intent.putExtra("latitude", lastKnownLocation.getLatitude());
+                        intent.putExtra("longitude", lastKnownLocation.getLongitude());
+                        startActivityForResult(intent,LAUNCH_POST);
+                    }
+                });
+            }
+        });
+
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        lastKnownLocation = location;
+                        Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
+                        intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
+                        intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
+                        intent.putExtra("longitudeMarker", marker.getPosition().longitude);
+                        intent.putExtra("latitudeMarker", marker.getPosition().latitude);
+                        intent.putExtra("id", marker.getId());
+                        startActivityForResult(intent, LAUNCH_CLAIM);
+                    }
+                });
             }
         });
 
@@ -204,49 +283,13 @@ public class MapsActivity extends AppCompatActivity
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
-
-                startActivity(intent);
-                return true;
+                marker.remove();
+                return false;
             }
         });
+        */
 
-         */
 
-
-    }
-    // [END maps_current_place_on_map_ready]
-
-    void uploadPant() {
-        try {
-            if (locationPermissionGranted) {
-                Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            lastKnownLocation = task.getResult();
-                            if (lastKnownLocation != null) {
-                                Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
-                                intent.putExtra("latitude", lastKnownLocation.getLatitude());
-                                intent.putExtra("longitude", lastKnownLocation.getLongitude());
-                                startActivityForResult(intent,LAUNCH_POST);
-
-                            }
-                        } else {
-                            //Log.d(TAG, "Current location is null. Using defaults.");
-                            //Log.e(TAG, "Exception: %s", task.getException());
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(defaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                        }
-                    }
-                });
-            }
-        } catch (SecurityException e)  {
-            Log.e("Exception: %s", e.getMessage(), e);
-        }
     }
 
     @Override
@@ -254,6 +297,7 @@ public class MapsActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LAUNCH_POST) {
             if(resultCode == Activity.RESULT_OK){
+                /*
                 double latitude = data.getDoubleExtra("latitude", 0);
                 double longitude = data.getDoubleExtra("longitude", 0);
 
@@ -272,20 +316,38 @@ public class MapsActivity extends AppCompatActivity
 
                 String snip = data.getStringExtra("amount");
                 LatLng pos = new LatLng(latitude, longitude);
-                mMap.addMarker(new MarkerOptions().position(pos).title(address)
+                Marker mark = mMap.addMarker(new MarkerOptions().position(pos).title(address)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
                         .snippet("Antal pant: "+ snip));
+                markers.add(mark);
+                */
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
+
+        }
+        if (requestCode == LAUNCH_CLAIM) {
+            if(resultCode == Activity.RESULT_OK){
+                String id = data.getStringExtra("id");
+                for (int i = 0; i < markers.size(); i++)  {
+                    System.out.println(markers.get(i).getId() + " hello theo");
+                   if (id.equals(markers.get(i).getId())) {
+                       markers.get(i).remove();
+                       markers.remove(i);
+                   }
+                }
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+            }
+
         }
     }
 
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
-    // [START maps_current_place_get_device_location]
     private void getDeviceLocation() {
         /*
          * Get the best and most recent location of the device, which may be null in rare

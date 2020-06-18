@@ -128,16 +128,12 @@ public class UploadActivity extends AppCompatActivity {
                                 FirebaseDatabase database = FirebaseDatabase.getInstance();
                                 FirebaseStorage storage = FirebaseStorage.getInstance();
 
-
                                 DatabaseReference databaseReference = database.getReference();
 
                                 String pantID = databaseReference.push().getKey();
                                 StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
 
-
                                 databaseReference.child("pants").child(pantID).setValue(pant);
-
-
 
                                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
