@@ -93,7 +93,6 @@ public class MapsActivity extends AppCompatActivity
     private static DatabaseReference databaseReference;
     private static StorageReference storageReference;
 
-    ArrayList<Marker> markers;
     ArrayList<Pant> pants;
 
     Button postButton;
@@ -113,6 +112,9 @@ public class MapsActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
+        if(mDrawerLayout == null){
+            Log.e(TAG,"mDraweLayout is null");
+        }
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -130,7 +132,6 @@ public class MapsActivity extends AppCompatActivity
 
 
 
-        markers = new ArrayList<Marker>();
         pants = new ArrayList<Pant>();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -165,7 +166,6 @@ public class MapsActivity extends AppCompatActivity
                         .title(address)
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                markers.add(mark);
                 pant.marker = mark;
                 /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
                     pant.marker.setVisible(true);
@@ -175,40 +175,30 @@ public class MapsActivity extends AppCompatActivity
                     pant.marker.setVisible(true);
                 }*/
                 pants.add(pant);
+                decideVisible(firebaseAuth.getCurrentUser(), pant);
 
                 Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
+                Log.i(TAG, String.valueOf(pants.size()));
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 Pant pant = dataSnapshot.getValue(Pant.class);
-               /* if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(true);
-                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(false);
-                }else{
-                    pant.marker.setVisible(true);
-                }*/
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                decideVisible(currentUser, pant);
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
                 Log.i(TAG,dataSnapshot.getKey());
                 for (int i = 0; i < pants.size(); i++) {
-                    if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) {
+                    if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) { //?????????????
                         pants.get(i).marker.remove();
                         pants.remove(i);
                     }
                 }
                 Pant pant = dataSnapshot.getValue(Pant.class);
-                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(true);
-                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(false);
-                }else{
-                    pant.marker.setVisible(true);
-                }*/
+                //decideVisible(firebaseAuth.getCurrentUser(), pant);
 
             }
 
@@ -222,65 +212,6 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
-    }
-
-    protected void onResume(){
-        super.onResume();
-        /*
-        databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                double latitude = pant.getLatitude();
-                double longitude = pant.getLongitude();
-
-                String address = "";
-
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    String thoroughfare = addresses.get(0).getThoroughfare();
-                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                LatLng latlng = new LatLng(latitude, longitude);
-
-                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())));
-                markers.add(mark);
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
-                mMap.addMarker(new MarkerOptions().position(latlng)
-                        .title(address)
-                        .snippet("Antal pant: " + pant.getQuantity())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        */
     }
 
     /**
@@ -454,6 +385,7 @@ public class MapsActivity extends AppCompatActivity
                         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                         pants.get(i).setClaimerUID(currentUser.getUid());
                         //pants.get(i).setClaimed(true);
+                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimed").setValue(true);
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
                     }
                 }
@@ -606,6 +538,18 @@ public class MapsActivity extends AppCompatActivity
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void decideVisible(FirebaseUser currentUser, Pant pant){
+        Log.i(TAG, pant.getClaimerUID());
+        Log.i(TAG, pant.marker.toString());
+            if (!pant.getClaimerUID().equals("")) {
+                pant.marker.setVisible(true);
+            } else if (currentUser.getUid().equals(pant.getClaimerUID())) {
+                pant.marker.setVisible(true);
+            } else {
+                pant.marker.setVisible(false);
+            }
     }
 
     /**

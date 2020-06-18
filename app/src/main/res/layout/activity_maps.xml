@@ -23,10 +23,10 @@
 
     <Button
         android:id="@+id/postButton"
-        android:layout_width="181dp"
+        android:layout_width="250dp"
         android:layout_height="57dp"
-        android:layout_marginBottom="40dp"
-        android:background="@drawable/claim_button_shape"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/post_button_shape"
         android:text="POST"
         android:textColor="#FFFFFF"
         android:textSize="22sp"
