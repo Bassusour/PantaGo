@@ -23,8 +23,10 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.facebook.login.LoginManager;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -43,6 +45,7 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -54,7 +57,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 public class MapsActivity extends AppCompatActivity
-        implements OnMapReadyCallback {
+        implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private static final int LAUNCH_POST = 1;
     private static final int LAUNCH_CLAIM = 2;
@@ -64,6 +67,7 @@ public class MapsActivity extends AppCompatActivity
     private CameraPosition cameraPosition;
     private ActionBarDrawerToggle mToggle;
     private DrawerLayout mDrawerLayout;
+    private NavigationView navigationView;
 
     FirebaseAuth firebaseAuth;
 
@@ -105,10 +109,10 @@ public class MapsActivity extends AppCompatActivity
         firebaseAuth = FirebaseAuth.getInstance();
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
         mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
-        if(mDrawerLayout == null){
-            Log.e(TAG,"mDraweLayout is null");
-        }
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -593,12 +597,32 @@ public class MapsActivity extends AppCompatActivity
         }
     }
 
+    /**
+    Method for changing to the drawer with button
+     */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(mToggle.onOptionsItemSelected(item)){
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Method for what item from the drawer was clicked
+     */
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        switch (menuItem.getItemId()){
+            case R.id.logout:
+                FirebaseAuth.getInstance().signOut();
+                LoginManager.getInstance().logOut();
+                Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
+                startActivity(intent);
+                break;
+        }
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     // [END maps_current_place_update_location_ui]

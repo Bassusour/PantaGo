@@ -43,7 +43,6 @@ public class LoginActivity extends AppCompatActivity {
     private ImageView image;
     private LoginButton fbLogin;
     private Button loginBtn;
-    private Button logOutBtn;
     private EditText emailInput;
     private EditText passwordInput;
     private AccessTokenTracker accessTokenTracker;
@@ -69,7 +68,6 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginButton);
         emailInput = findViewById(R.id.email);
         passwordInput = findViewById(R.id.password);
-        logOutBtn = findViewById(R.id.logoutBtn);
 
         //Saved state
         if(savedInstanceState != null){
@@ -86,7 +84,7 @@ public class LoginActivity extends AppCompatActivity {
             //textViewUser.setText("logged in as2: " + userEmail.toString());
             Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
             startActivity(intent);
-            //finish();
+            finish();
         }
 
 
@@ -170,7 +168,7 @@ public class LoginActivity extends AppCompatActivity {
                                     LoginManager.getInstance().logOut();
                                     updateUI(user);
                                     startActivity(intent);
-                                    //finish();
+                                    finish();
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Log.w(TAG, "signInWithEmail:failure", task.getException());
@@ -183,15 +181,6 @@ public class LoginActivity extends AppCompatActivity {
                                 // ...
                             }
                         });
-            }
-        });
-
-        //Logout
-        logOutBtn.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
-                FirebaseAuth.getInstance().signOut();
-                LoginManager.getInstance().logOut();
-                updateUI(null);
             }
         });
 
