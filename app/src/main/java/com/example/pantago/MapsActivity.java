@@ -111,7 +111,6 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        printKeyHash();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         mContext = this;
