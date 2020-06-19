@@ -142,7 +142,6 @@ public class UploadActivity extends AppCompatActivity {
                                 StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
 
                                 pant.setPantKey(pantID);
-                                pant.setClaimed(false);
 
                                 pant.setOwnerUID(firebaseAuth.getCurrentUser().getUid());
 

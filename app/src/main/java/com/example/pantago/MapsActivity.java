@@ -43,6 +43,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.android.material.navigation.NavigationView;
@@ -69,6 +70,8 @@ public class MapsActivity extends AppCompatActivity
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
 
+    private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
+
     FirebaseAuth firebaseAuth;
 
     private String id;
@@ -93,7 +96,6 @@ public class MapsActivity extends AppCompatActivity
     private static DatabaseReference databaseReference;
     private static StorageReference storageReference;
 
-    ArrayList<Marker> markers;
     ArrayList<Pant> pants;
 
     Button postButton;
@@ -113,6 +115,9 @@ public class MapsActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
+        if(mDrawerLayout == null){
+            Log.e(TAG,"mDraweLayout is null");
+        }
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -130,7 +135,6 @@ public class MapsActivity extends AppCompatActivity
 
 
 
-        markers = new ArrayList<Marker>();
         pants = new ArrayList<Pant>();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -165,8 +169,10 @@ public class MapsActivity extends AppCompatActivity
                         .title(address)
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                markers.add(mark);
                 pant.marker = mark;
+
+                markerMap.put(pant.getPantKey(), mark);
+
                 /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
                     pant.marker.setVisible(true);
                 }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
@@ -175,40 +181,23 @@ public class MapsActivity extends AppCompatActivity
                     pant.marker.setVisible(true);
                 }*/
                 pants.add(pant);
+                decideVisible(firebaseAuth.getCurrentUser(), pant);
 
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Log.i(TAG, "onChildChanged() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
-               /* if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(true);
-                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(false);
-                }else{
-                    pant.marker.setVisible(true);
-                }*/
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                decideVisible(currentUser, pant);
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Log.i(TAG,dataSnapshot.getKey());
-                for (int i = 0; i < pants.size(); i++) {
-                    if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) {
-                        pants.get(i).marker.remove();
-                        pants.remove(i);
-                    }
-                }
                 Pant pant = dataSnapshot.getValue(Pant.class);
-                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(true);
-                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(false);
-                }else{
-                    pant.marker.setVisible(true);
-                }*/
+                markerMap.get(pant.getPantKey()).remove();
+                //decideVisible(firebaseAuth.getCurrentUser(), pant);
 
             }
 
@@ -222,65 +211,6 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
-    }
-
-    protected void onResume(){
-        super.onResume();
-        /*
-        databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                double latitude = pant.getLatitude();
-                double longitude = pant.getLongitude();
-
-                String address = "";
-
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    String thoroughfare = addresses.get(0).getThoroughfare();
-                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                LatLng latlng = new LatLng(latitude, longitude);
-
-                Marker mark = mMap.addMarker(new MarkerOptions().position(latlng).title(String.valueOf(pant.getQuantity())));
-                markers.add(mark);
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
-                mMap.addMarker(new MarkerOptions().position(latlng)
-                        .title(address)
-                        .snippet("Antal pant: " + pant.getQuantity())
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        */
     }
 
     /**
@@ -372,6 +302,7 @@ public class MapsActivity extends AppCompatActivity
                             Log.i(TAG, pant.getOwnerUID());
                             Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
                             intent.putExtra("id", marker.getId());
+                            intent.putExtra("pantKey", pant.getPantKey());
                             startActivityForResult(intent, LAUNCH_REMOVE);
                         }else {
                             lastKnownLocation = location;
@@ -381,6 +312,7 @@ public class MapsActivity extends AppCompatActivity
                             intent.putExtra("longitudeMarker", marker.getPosition().longitude);
                             intent.putExtra("latitudeMarker", marker.getPosition().latitude);
                             intent.putExtra("id", marker.getId());
+                            intent.putExtra("pantKey", pant.getPantKey());
                             startActivityForResult(intent, LAUNCH_CLAIM);
                         }
                     }
@@ -438,54 +370,54 @@ public class MapsActivity extends AppCompatActivity
         }
         if (requestCode == LAUNCH_CLAIM) {
             if(resultCode == Activity.RESULT_OK){
-                String id = data.getStringExtra("id");
-                /*
-                for (int i = 0; i < markers.size(); i++)  {
-                    System.out.println(markers.get(i).getId() + " hello theo");
-                    if (id.equals(markers.get(i).getId())) {
-                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                    }
-                }
+               // String id = data.getStringExtra("id");
 
-                 */
-                for (int i = 0; i < pants.size(); i++) {
+               /* for (int i = 0; i < pants.size(); i++) {
                     if (id.equals(pants.get(i).marker.getId())) {
                         Log.i(TAG, pants.get(i).getPantKey());
                         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                         pants.get(i).setClaimerUID(currentUser.getUid());
-                        //pants.get(i).setClaimed(true);
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
                     }
-                }
+                }*/
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
 
+            /*if (resultCode == 69) {
+                for (int i = 0; i < pants.size(); i++) {
+                    if (id.equals(pants.get(i).marker.getId())) {
+                        Log.i(TAG, pants.get(i).getPantKey());
+                        pants.get(i).setClaimerUID("");
+                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue("");
+                    }
+                }
+            }
+
+             */
+
         }
 
         if (requestCode == LAUNCH_REMOVE) {
             if(resultCode == Activity.RESULT_OK){
-                String id = data.getStringExtra("id");
-                /*
-                for (int i = 0; i < markers.size(); i++)  {
-                    System.out.println(markers.get(i).getId() + " hello theo");
-                    if (id.equals(markers.get(i).getId())) {
-                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                    }
-                }
+                /*String id = data.getStringExtra("id");
 
-                 */
                 for (int i = 0; i < pants.size(); i++) {
                     if (id.equals(pants.get(i).marker.getId())) {
                         Log.i(TAG, pants.get(i).getPantKey());
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
                     }
                 }
+
+                 */
             }
+
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
+
+
 
         }
     }
@@ -606,6 +538,18 @@ public class MapsActivity extends AppCompatActivity
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void decideVisible(FirebaseUser currentUser, Pant pant){
+            if (pant.getClaimerUID().equals("")) {
+                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                markerMap.get(pant.getPantKey()).setVisible(true);
+            } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
+                markerMap.get(pant.getPantKey()).setVisible(true);
+                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+            } else {
+                markerMap.get(pant.getPantKey()).setVisible(false);
+            }
     }
 
     /**
