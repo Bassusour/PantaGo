@@ -12,20 +12,26 @@ import android.location.Location;
 import android.os.Bundle;
 
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.facebook.login.LoginManager;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -47,6 +53,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -56,13 +66,19 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 public class MapsActivity extends AppCompatActivity
-        implements OnMapReadyCallback {
+        implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     private static final int LAUNCH_POST = 1;
     private static final int LAUNCH_CLAIM = 2;
+    private static final int LAUNCH_REMOVE = 3;
     private static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
+    private ActionBarDrawerToggle mToggle;
+    private DrawerLayout mDrawerLayout;
+    private NavigationView navigationView;
+
+    FirebaseAuth firebaseAuth;
 
     private String id;
 
@@ -99,7 +115,20 @@ public class MapsActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
         mContext = this;
+
+        firebaseAuth = FirebaseAuth.getInstance();
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
+        mDrawerLayout.addDrawerListener(mToggle);
+        mToggle.syncState();
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
         fragmentManager = getSupportFragmentManager();
@@ -114,7 +143,7 @@ public class MapsActivity extends AppCompatActivity
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
 
-        setContentView(R.layout.activity_maps);
+
 
         markers = new ArrayList<Marker>();
         pants = new ArrayList<Pant>();
@@ -163,18 +192,33 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
+                Pant pant = dataSnapshot.getValue(Pant.class);
+               /* if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(true);
+                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(false);
+                }else{
+                    pant.marker.setVisible(true);
+                }*/
             }
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Log.i(TAG, dataSnapshot.getKey());
+                Log.i(TAG,dataSnapshot.getKey());
                 for (int i = 0; i < pants.size(); i++) {
                     if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) {
                         pants.get(i).marker.remove();
                         pants.remove(i);
                     }
                 }
+                Pant pant = dataSnapshot.getValue(Pant.class);
+                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(true);
+                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
+                    pant.marker.setVisible(false);
+                }else{
+                    pant.marker.setVisible(true);
+                }*/
 
             }
 
@@ -189,7 +233,6 @@ public class MapsActivity extends AppCompatActivity
             }
         });
     }
-
 
     protected void onResume(){
         super.onResume();
@@ -277,14 +320,28 @@ public class MapsActivity extends AppCompatActivity
                 fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
-                        lastKnownLocation = location;
-                        Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
-                        intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
-                        intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
-                        intent.putExtra("longitudeMarker", marker.getPosition().longitude);
-                        intent.putExtra("latitudeMarker", marker.getPosition().latitude);
-                        intent.putExtra("id", marker.getId());
-                        startActivityForResult(intent, LAUNCH_CLAIM);
+                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                        Pant pant = new Pant();
+                        for (int i = 0; i < pants.size(); i++) {
+                            if (pants.get(i).marker.getId().equals(marker.getId())) {
+                                pant = pants.get(i);
+                            }
+                        }
+                        if(currentUser.getUid().equals(pant.getOwnerUID())){
+                            Log.i(TAG, pant.getOwnerUID());
+                            Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
+                            intent.putExtra("id", marker.getId());
+                            startActivityForResult(intent, LAUNCH_REMOVE);
+                        }else {
+                            lastKnownLocation = location;
+                            Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
+                            intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
+                            intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
+                            intent.putExtra("longitudeMarker", marker.getPosition().longitude);
+                            intent.putExtra("latitudeMarker", marker.getPosition().latitude);
+                            intent.putExtra("id", marker.getId());
+                            startActivityForResult(intent, LAUNCH_CLAIM);
+                        }
                     }
                 });
             }
@@ -298,6 +355,7 @@ public class MapsActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == LAUNCH_POST) {
             if(resultCode == Activity.RESULT_OK){
+                /*
                 double latitude = data.getDoubleExtra("latitude", 0);
                 double longitude = data.getDoubleExtra("longitude", 0);
 
@@ -340,6 +398,34 @@ public class MapsActivity extends AppCompatActivity
                 for (int i = 0; i < pants.size(); i++) {
                     if (id.equals(pants.get(i).marker.getId())) {
                         Log.i(TAG, pants.get(i).getPantKey());
+                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                        pants.get(i).setClaimerUID(currentUser.getUid());
+                        //pants.get(i).setClaimed(true);
+                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
+                    }
+                }
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+            }
+
+        }
+
+        if (requestCode == LAUNCH_REMOVE) {
+            if(resultCode == Activity.RESULT_OK){
+                String id = data.getStringExtra("id");
+                /*
+                for (int i = 0; i < markers.size(); i++)  {
+                    System.out.println(markers.get(i).getId() + " hello theo");
+                    if (id.equals(markers.get(i).getId())) {
+                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
+                    }
+                }
+
+                 */
+                for (int i = 0; i < pants.size(); i++) {
+                    if (id.equals(pants.get(i).marker.getId())) {
+                        Log.i(TAG, pants.get(i).getPantKey());
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
                     }
                 }
@@ -354,7 +440,6 @@ public class MapsActivity extends AppCompatActivity
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
-    // [START maps_current_place_get_device_location]
     private void getDeviceLocation() {
         /*
          * Get the best and most recent location of the device, which may be null in rare
@@ -458,6 +543,35 @@ public class MapsActivity extends AppCompatActivity
             Log.e("Exception: %s", e.getMessage());
         }
     }
+
+    /**
+    Method for changing to the drawer with button
+     */
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(mToggle.onOptionsItemSelected(item)){
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Method for what item from the drawer was clicked
+     */
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        switch (menuItem.getItemId()){
+            case R.id.logout:
+                FirebaseAuth.getInstance().signOut();
+                LoginManager.getInstance().logOut();
+                Intent intent = new Intent(MapsActivity.this, LoginActivity.class);
+                startActivity(intent);
+                break;
+        }
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
     // [END maps_current_place_update_location_ui]
 
    public static double getDistance(double lat1, double lon1, double lat2, double lon2){

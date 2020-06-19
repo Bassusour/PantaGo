@@ -32,8 +32,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -61,6 +64,8 @@ public class UploadActivity extends AppCompatActivity {
     Context mContext = this;
     private Bitmap bitmap;
 
+    FirebaseAuth firebaseAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
@@ -75,6 +80,8 @@ public class UploadActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.CAMERA},
                     REQUEST_IMAGE_CAPTURE);
         }
+        firebaseAuth = FirebaseAuth.getInstance();
+
         setContentView(R.layout.activity_upload);
         uploadButton = (Button) findViewById(R.id.buttonUpload);
         amountText = (EditText) findViewById(R.id.number_of_objects);
@@ -135,6 +142,9 @@ public class UploadActivity extends AppCompatActivity {
                                 StorageReference storageReference = storage.getReference().child("Pictures/"+pantID+".jpg");
 
                                 pant.setPantKey(pantID);
+                                pant.setClaimed(false);
+
+                                pant.setOwnerUID(firebaseAuth.getCurrentUser().getUid());
 
                                 databaseReference.child("pants").child(pantID).setValue(pant);
 

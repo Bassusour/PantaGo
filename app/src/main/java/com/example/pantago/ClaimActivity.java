@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;;import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseAuth;
+
 import android.view.Window;
 import android.widget.Button;;
 
@@ -16,6 +18,7 @@ public class ClaimActivity extends AppCompatActivity {
 
     String TAG = "pandaGo";
     public static boolean claimed;
+    FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +30,7 @@ public class ClaimActivity extends AppCompatActivity {
         Button tilbage = findViewById(R.id.buttonTilbage);
 
         Intent intent = getIntent();
+        firebaseAuth = FirebaseAuth.getInstance();
 
        claim.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -37,6 +41,7 @@ public class ClaimActivity extends AppCompatActivity {
                 double longitudeMarker = intent.getDoubleExtra("longitudeMarker", 0);
                 Log.i(TAG, String.valueOf(latitudeMarker));
                 Log.i(TAG, String.valueOf(latitudeUser));
+
                 if (Math.pow(latitudeMarker-latitudeUser,2) + Math.pow(longitudeMarker-longitudeUser,2) <= 0.000001 ) {
                     setResult(Activity.RESULT_OK, getIntent());
                     finish();
