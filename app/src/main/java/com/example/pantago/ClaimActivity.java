@@ -31,7 +31,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import android.view.Window;
-import android.widget.Button;;
+import android.widget.TextView;;
 
 public class ClaimActivity extends AppCompatActivity {
 
@@ -49,8 +49,12 @@ public class ClaimActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         setContentView(R.layout.activity_claim);
         Button claim = (Button) findViewById(R.id.buttonClaim);
+        TextView textViewQuantity = findViewById(R.id.textViewClaimQuantity);
+        TextView textViewDescription = findViewById(R.id.textViewClaimDescription);
         Button collectButton = findViewById(R.id.buttonCollect);
         collectButton.setVisibility(View.INVISIBLE);
+
+
 
         Intent intent = getIntent();
         firebaseAuth = FirebaseAuth.getInstance();
@@ -70,14 +74,24 @@ public class ClaimActivity extends AppCompatActivity {
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    Pant pant = dataSnapshot.getValue(Pant.class);
-                    String claimerUID = pant.getClaimerUID();
-                    if (currentUser.equals(claimerUID)) {
-                        claim.setText("UNCLAIM");
-                        collectButton.setVisibility(View.VISIBLE);
+                Pant pant = dataSnapshot.getValue(Pant.class);
+
+                textViewQuantity.setText(pant.getQuantity() + "");
+                textViewDescription.setText(pant.getDescription());
+
+                String claimerUID = pant.getClaimerUID();
+                if (currentUser.equals(claimerUID)) {
+                    claim.setText("UNCLAIM");
+                    if (dataSnapshot.exists()) {
+
+                        if (currentUser.equals(claimerUID)) {
+                            claim.setText("UNCLAIM");
+                            collectButton.setVisibility(View.VISIBLE);
+                        }
                     }
+
                 }
+
 
             }
 
@@ -85,11 +99,13 @@ public class ClaimActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
+
+            ;
         });
 
         double latitudeMarker = intent.getDoubleExtra("latitudeMarker", 0);
         double longitudeMarker = intent.getDoubleExtra("longitudeMarker", 0);
-        Log.i(TAG, String.valueOf(latitudeMarker));
+
 
         claim.setOnClickListener(new View.OnClickListener() {
             @Override

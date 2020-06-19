@@ -113,6 +113,12 @@ public class MapsActivity extends AppCompatActivity
         setContentView(R.layout.activity_maps);
         mContext = this;
 
+
+
+
+
+
+
         firebaseAuth = FirebaseAuth.getInstance();
 
         FirebaseUser user = firebaseAuth.getCurrentUser();
