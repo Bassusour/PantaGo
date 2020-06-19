@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.media.Image;
 import android.os.Bundle;
 
 import android.util.Log;
@@ -14,6 +15,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -42,6 +45,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +61,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
@@ -69,6 +75,7 @@ public class MapsActivity extends AppCompatActivity
     private ActionBarDrawerToggle mToggle;
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
+    private View headerView;
 
     private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
 
@@ -104,16 +111,20 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        printKeyHash();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         mContext = this;
 
         firebaseAuth = FirebaseAuth.getInstance();
 
+        FirebaseUser user = firebaseAuth.getCurrentUser();
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
-        navigationView = findViewById(R.id.nav_view);
+        navigationView = findViewById(R.id.nav_view); //Maybe cast
         navigationView.setNavigationItemSelectedListener(this);
+        headerView = navigationView.getHeaderView(0);
 
+        //UI
         mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
         if(mDrawerLayout == null){
             Log.e(TAG,"mDraweLayout is null");
@@ -121,6 +132,10 @@ public class MapsActivity extends AppCompatActivity
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Log.i(TAG, "test4");
+        updateUI(user);
+
+
 
 
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
@@ -567,6 +582,26 @@ public class MapsActivity extends AppCompatActivity
         }
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void updateUI(FirebaseUser user){
+        if(user != null){
+            Log.i(TAG, "test1");
+            TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
+            TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
+            ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
+
+            email.setText("email: " + user.getEmail().toString());
+            title.setText("title: starter");
+            if(user.getPhotoUrl() != null){
+                Log.i(TAG, "test2");
+                String photoUrl = user.getPhotoUrl().toString();
+                photoUrl = photoUrl + "?type=large";
+                Picasso.get().load(photoUrl).into(userImage);
+            } else {
+                userImage.setImageResource(R.drawable.anonymous);
+            }
+        }
     }
 
     // [END maps_current_place_update_location_ui]
