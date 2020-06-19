@@ -3,15 +3,23 @@ package com.example.pantago;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
+
 import com.example.pantago.Pant;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;;import com.google.android.gms.maps.model.LatLng;
+import android.widget.Button;;import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -27,25 +35,29 @@ import android.widget.Button;;
 
 public class ClaimActivity extends AppCompatActivity {
 
-    String TAG = "pandaGo";
+    String TAG = "pantaGo";
     public static boolean claimed;
     FirebaseAuth firebaseAuth;
+    FusedLocationProviderClient fusedLocationProviderClient;
+    private ClaimActivity mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         getSupportActionBar().hide();
         setContentView(R.layout.activity_claim);
         Button claim = (Button) findViewById(R.id.buttonClaim);
-        Button tilbage = findViewById(R.id.buttonTilbage);
-
+        Button collectButton = findViewById(R.id.buttonCollect);
+        collectButton.setVisibility(View.INVISIBLE);
 
         Intent intent = getIntent();
         firebaseAuth = FirebaseAuth.getInstance();
 
         String currentUser = firebaseAuth.getCurrentUser().getUid();
 
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(mContext);
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         DatabaseReference databaseReference = firebaseDatabase.getReference();
@@ -58,11 +70,15 @@ public class ClaimActivity extends AppCompatActivity {
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                String claimerUID = pant.getClaimerUID();
-                if(currentUser.equals(claimerUID)){
-                    claim.setText("UNCLAIM");
+                if (dataSnapshot.exists()) {
+                    Pant pant = dataSnapshot.getValue(Pant.class);
+                    String claimerUID = pant.getClaimerUID();
+                    if (currentUser.equals(claimerUID)) {
+                        claim.setText("UNCLAIM");
+                        collectButton.setVisibility(View.VISIBLE);
+                    }
                 }
+
             }
 
             @Override
@@ -71,40 +87,70 @@ public class ClaimActivity extends AppCompatActivity {
             }
         });
 
+        double latitudeMarker = intent.getDoubleExtra("latitudeMarker", 0);
+        double longitudeMarker = intent.getDoubleExtra("longitudeMarker", 0);
+        Log.i(TAG, String.valueOf(latitudeMarker));
 
-       claim.setOnClickListener(new View.OnClickListener() {
+        claim.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                double latitudeUser = intent.getDoubleExtra("latitudeUser", 0);
-                double longitudeUser = intent.getDoubleExtra("longitudeUser", 0);
-                double latitudeMarker = intent.getDoubleExtra("latitudeMarker", 0);
-                double longitudeMarker = intent.getDoubleExtra("longitudeMarker", 0);
-                Log.i(TAG, String.valueOf(latitudeMarker));
-                Log.i(TAG, String.valueOf(latitudeUser));
-
-                if(claim.getText().equals("UNCLAIM")){
-                    pantRef.child("claimerUID").setValue("");
-                    setResult(Activity.RESULT_OK);
-                    finish();
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
                 }
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (claim.getText().equals("UNCLAIM")) {
+                            pantRef.child("claimerUID").setValue("");
+                            finish();
+                        }
 
-                if(claim.getText().equals("CLAIM")){
-                    if (Math.pow(latitudeMarker-latitudeUser,2) + Math.pow(longitudeMarker-longitudeUser,2) <= 0.000001 ) {
-                        pantRef.child("claimerUID").setValue(currentUser);
-                        setResult(Activity.RESULT_OK, getIntent());
-                        finish();
+                        if (claim.getText().equals("CLAIM")) {
+                            if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.001) {
+                                pantRef.child("claimerUID").setValue(currentUser);
+                                finish();
+                            }
+                        }
                     }
-                }
+                });
+
 
             }
         });
 
-        tilbage.setOnClickListener(new View.OnClickListener() {
+        collectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
-            }
-        });
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
+                }
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.000001) {
+                            pantRef.removeValue();
+                            finish();
+                        }
+                    }
+                });
+
+          }
+       });
+
     }
 
 

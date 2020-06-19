@@ -81,8 +81,6 @@ public class MapsActivity extends AppCompatActivity
 
     FirebaseAuth firebaseAuth;
 
-    private String id;
-
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient fusedLocationProviderClient;
 
@@ -136,7 +134,6 @@ public class MapsActivity extends AppCompatActivity
 
 
 
-
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
@@ -146,8 +143,6 @@ public class MapsActivity extends AppCompatActivity
             lastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             cameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-
-
 
         pants = new ArrayList<Pant>();
 
@@ -197,6 +192,7 @@ public class MapsActivity extends AppCompatActivity
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
 
+                Log.i(TAG, "Resumed");
             }
 
             @Override
@@ -239,16 +235,8 @@ public class MapsActivity extends AppCompatActivity
         }
         super.onSaveInstanceState(outState);
     }
-    // [END maps_current_place_on_save_instance_state]
 
-
-
-    /**
-     * Manipulates the map when it's available.
-     * This callback is triggered when the map is ready to be used.
-     */
-    // [START maps_current_place_on_map_ready]
-    @Override
+   @Override
     public void onMapReady(GoogleMap map) {
         this.mMap = map;
 
@@ -260,7 +248,6 @@ public class MapsActivity extends AppCompatActivity
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
-
 
         postButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -283,7 +270,7 @@ public class MapsActivity extends AppCompatActivity
                         Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
                         intent.putExtra("latitude", lastKnownLocation.getLatitude());
                         intent.putExtra("longitude", lastKnownLocation.getLongitude());
-                        startActivityForResult(intent,LAUNCH_POST);
+                        startActivity(intent);
                     }
                 });
             }
@@ -292,45 +279,29 @@ public class MapsActivity extends AppCompatActivity
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                        Pant pant = new Pant();
-                        for (int i = 0; i < pants.size(); i++) {
-                            if (pants.get(i).marker.getId().equals(marker.getId())) {
-                                pant = pants.get(i);
-                            }
-                        }
-                        if(currentUser.getUid().equals(pant.getOwnerUID())){
-                            Log.i(TAG, pant.getOwnerUID());
-                            Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
-                            intent.putExtra("id", marker.getId());
-                            intent.putExtra("pantKey", pant.getPantKey());
-                            startActivityForResult(intent, LAUNCH_REMOVE);
-                        }else {
-                            lastKnownLocation = location;
-                            Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
-                            intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
-                            intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
-                            intent.putExtra("longitudeMarker", marker.getPosition().longitude);
-                            intent.putExtra("latitudeMarker", marker.getPosition().latitude);
-                            intent.putExtra("id", marker.getId());
-                            intent.putExtra("pantKey", pant.getPantKey());
-                            startActivityForResult(intent, LAUNCH_CLAIM);
-                        }
+
+                FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+                Pant pant = new Pant();
+                for (int i = 0; i < pants.size(); i++) {
+                    if (pants.get(i).marker.getId().equals(marker.getId())) {
+                        pant = pants.get(i);
                     }
-                });
+                }
+                if(currentUser.getUid().equals(pant.getOwnerUID())){
+                    Log.i(TAG, pant.getOwnerUID());
+                    Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
+                    intent.putExtra("id", marker.getId());
+                    intent.putExtra("pantKey", pant.getPantKey());
+                    startActivity(intent);
+                }else {
+                    Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
+                    intent.putExtra("longitudeMarker", marker.getPosition().longitude);
+                    intent.putExtra("latitudeMarker", marker.getPosition().latitude);
+                    intent.putExtra("id", marker.getId());
+                    intent.putExtra("pantKey", pant.getPantKey());
+                    startActivity(intent);
+                }
+
             }
         });
 
@@ -347,94 +318,6 @@ public class MapsActivity extends AppCompatActivity
 
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == LAUNCH_POST) {
-            if(resultCode == Activity.RESULT_OK){
-                /*
-                double latitude = data.getDoubleExtra("latitude", 0);
-                double longitude = data.getDoubleExtra("longitude", 0);
-
-                String address = "";
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    String thoroughfare = addresses.get(0).getThoroughfare();
-                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                String snip = data.getStringExtra("amount");
-                LatLng pos = new LatLng(latitude, longitude);
-                Marker mark = mMap.addMarker(new MarkerOptions().position(pos).title(address)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                        .snippet("Antal pant: "+ snip));
-                markers.add(mark);
-                */
-            }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
-            }
-
-        }
-        if (requestCode == LAUNCH_CLAIM) {
-            if(resultCode == Activity.RESULT_OK){
-               // String id = data.getStringExtra("id");
-
-               /* for (int i = 0; i < pants.size(); i++) {
-                    if (id.equals(pants.get(i).marker.getId())) {
-                        Log.i(TAG, pants.get(i).getPantKey());
-                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                        pants.get(i).setClaimerUID(currentUser.getUid());
-                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
-                    }
-                }*/
-            }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
-            }
-
-            /*if (resultCode == 69) {
-                for (int i = 0; i < pants.size(); i++) {
-                    if (id.equals(pants.get(i).marker.getId())) {
-                        Log.i(TAG, pants.get(i).getPantKey());
-                        pants.get(i).setClaimerUID("");
-                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue("");
-                    }
-                }
-            }
-
-             */
-
-        }
-
-        if (requestCode == LAUNCH_REMOVE) {
-            if(resultCode == Activity.RESULT_OK){
-                /*String id = data.getStringExtra("id");
-
-                for (int i = 0; i < pants.size(); i++) {
-                    if (id.equals(pants.get(i).marker.getId())) {
-                        Log.i(TAG, pants.get(i).getPantKey());
-                        databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                    }
-                }
-
-                 */
-            }
-
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
-            }
-
-
-
-        }
-    }
 
     /**
      * Gets the current location of the device, and positions the map's camera.
@@ -543,9 +426,6 @@ public class MapsActivity extends AppCompatActivity
         }
     }
 
-    /**
-    Method for changing to the drawer with button
-     */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(mToggle.onOptionsItemSelected(item)){
