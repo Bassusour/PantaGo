@@ -13,6 +13,7 @@ public class Pant {
     private String claimerUID;
     private boolean claimed;
 
+
     public Pant(String description, int quantity, double latitude, double longitude){
         this.description = description;
         //this.image = image;
