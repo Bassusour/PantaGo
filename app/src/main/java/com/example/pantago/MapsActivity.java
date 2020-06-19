@@ -43,6 +43,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.android.material.navigation.NavigationView;
@@ -68,6 +69,8 @@ public class MapsActivity extends AppCompatActivity
     private ActionBarDrawerToggle mToggle;
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
+
+    private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
 
     FirebaseAuth firebaseAuth;
 
@@ -167,6 +170,9 @@ public class MapsActivity extends AppCompatActivity
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 pant.marker = mark;
+
+                markerMap.put(pant.getPantKey(), mark);
+
                 /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
                     pant.marker.setVisible(true);
                 }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
@@ -177,12 +183,11 @@ public class MapsActivity extends AppCompatActivity
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
 
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(pants.size()));
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Log.i(TAG, "onChildChanged() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 decideVisible(currentUser, pant);
@@ -190,14 +195,8 @@ public class MapsActivity extends AppCompatActivity
 
             @Override
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Log.i(TAG,dataSnapshot.getKey());
-                for (int i = 0; i < pants.size(); i++) {
-                    if (pants.get(i).getPantKey().equals(dataSnapshot.getKey())) { //?????????????
-                        pants.get(i).marker.remove();
-                        pants.remove(i);
-                    }
-                }
                 Pant pant = dataSnapshot.getValue(Pant.class);
+                markerMap.get(pant.getPantKey()).remove();
                 //decideVisible(firebaseAuth.getCurrentUser(), pant);
 
             }
@@ -303,6 +302,7 @@ public class MapsActivity extends AppCompatActivity
                             Log.i(TAG, pant.getOwnerUID());
                             Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
                             intent.putExtra("id", marker.getId());
+                            intent.putExtra("pantKey", pant.getPantKey());
                             startActivityForResult(intent, LAUNCH_REMOVE);
                         }else {
                             lastKnownLocation = location;
@@ -312,6 +312,7 @@ public class MapsActivity extends AppCompatActivity
                             intent.putExtra("longitudeMarker", marker.getPosition().longitude);
                             intent.putExtra("latitudeMarker", marker.getPosition().latitude);
                             intent.putExtra("id", marker.getId());
+                            intent.putExtra("pantKey", pant.getPantKey());
                             startActivityForResult(intent, LAUNCH_CLAIM);
                         }
                     }
@@ -369,55 +370,54 @@ public class MapsActivity extends AppCompatActivity
         }
         if (requestCode == LAUNCH_CLAIM) {
             if(resultCode == Activity.RESULT_OK){
-                String id = data.getStringExtra("id");
-                /*
-                for (int i = 0; i < markers.size(); i++)  {
-                    System.out.println(markers.get(i).getId() + " hello theo");
-                    if (id.equals(markers.get(i).getId())) {
-                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                    }
-                }
+               // String id = data.getStringExtra("id");
 
-                 */
-                for (int i = 0; i < pants.size(); i++) {
+               /* for (int i = 0; i < pants.size(); i++) {
                     if (id.equals(pants.get(i).marker.getId())) {
                         Log.i(TAG, pants.get(i).getPantKey());
                         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                         pants.get(i).setClaimerUID(currentUser.getUid());
-                        //pants.get(i).setClaimed(true);
-                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimed").setValue(true);
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue(currentUser.getUid());
                     }
-                }
+                }*/
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
 
+            /*if (resultCode == 69) {
+                for (int i = 0; i < pants.size(); i++) {
+                    if (id.equals(pants.get(i).marker.getId())) {
+                        Log.i(TAG, pants.get(i).getPantKey());
+                        pants.get(i).setClaimerUID("");
+                        databaseReference.child("pants").child(pants.get(i).getPantKey()).child("claimerUID").setValue("");
+                    }
+                }
+            }
+
+             */
+
         }
 
         if (requestCode == LAUNCH_REMOVE) {
             if(resultCode == Activity.RESULT_OK){
-                String id = data.getStringExtra("id");
-                /*
-                for (int i = 0; i < markers.size(); i++)  {
-                    System.out.println(markers.get(i).getId() + " hello theo");
-                    if (id.equals(markers.get(i).getId())) {
-                        //databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
-                    }
-                }
+                /*String id = data.getStringExtra("id");
 
-                 */
                 for (int i = 0; i < pants.size(); i++) {
                     if (id.equals(pants.get(i).marker.getId())) {
                         Log.i(TAG, pants.get(i).getPantKey());
                         databaseReference.child("pants").child(pants.get(i).getPantKey()).removeValue();
                     }
                 }
+
+                 */
             }
+
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
+
+
 
         }
     }
@@ -541,14 +541,14 @@ public class MapsActivity extends AppCompatActivity
     }
 
     public void decideVisible(FirebaseUser currentUser, Pant pant){
-        Log.i(TAG, pant.getClaimerUID());
-        Log.i(TAG, pant.marker.toString());
-            if (!pant.getClaimerUID().equals("")) {
-                pant.marker.setVisible(true);
-            } else if (currentUser.getUid().equals(pant.getClaimerUID())) {
-                pant.marker.setVisible(true);
+            if (pant.getClaimerUID().equals("")) {
+                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                markerMap.get(pant.getPantKey()).setVisible(true);
+            } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
+                markerMap.get(pant.getPantKey()).setVisible(true);
+                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
             } else {
-                pant.marker.setVisible(false);
+                markerMap.get(pant.getPantKey()).setVisible(false);
             }
     }
 
