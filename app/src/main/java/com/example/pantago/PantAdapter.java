@@ -2,22 +2,27 @@ package com.example.pantago;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.Image;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
 
-    private final List<PantListObject> mValues;
 
-    public PantAdapter(List<PantListObject> items) {
+    private final List<PantListObject> mValues;
+    private Context mContext;
+
+    public PantAdapter(ArrayList<PantListObject> items) {
         mValues = items;
     }
 
@@ -31,10 +36,17 @@ public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mAfstandNumb.setText("ff");
-        holder.mAntalNumb.setText(String.valueOf(mValues.get(position).getPant().getQuantity()));
         holder.mThumbnail.setImageBitmap(mValues.get(position).getBitmap());
-        holder.mAfstandNumb.setText(String.valueOf(mValues.get(position).getDistance()));
+        holder.mAntalText.setText(String.format("Antal: %s", holder.mItem.getPant().getQuantity()));
+        holder.mAfstandNumb.setText(String.format("%.1f km",holder.mItem.getDistance()/1000));
+        holder.mView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.i(MapsActivity.TAG, String.valueOf(holder.mItem.getPant().getQuantity()));
+                MapsActivity activity =(MapsActivity) mContext;
+                activity.zoomToPant(holder.mItem.getPant());
+            }
+        });
     }
 
     @Override
@@ -45,8 +57,6 @@ public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mAntalText;
-        public final TextView mAntalNumb;
-        public final TextView mAfstandText;
         public final TextView mAfstandNumb;
         public final ImageView mThumbnail;
         public PantListObject mItem;
@@ -55,8 +65,6 @@ public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
             super(view);
             mView = view;
             mAntalText= (TextView) view.findViewById(R.id.antaltext);
-            mAntalNumb= (TextView) view.findViewById(R.id.antalNumb);
-            mAfstandText= (TextView) view.findViewById(R.id.afstandText);
             mAfstandNumb= (TextView) view.findViewById(R.id.AfstandNumb);
             mThumbnail= (ImageView) view.findViewById(R.id.thumbnail);
 
@@ -66,5 +74,8 @@ public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
         public String toString() {
             return super.toString() + " '" + mAfstandNumb.getText() + "'";
         }
+    }
+    public void addContext(Context context){
+        mContext = context;
     }
 }

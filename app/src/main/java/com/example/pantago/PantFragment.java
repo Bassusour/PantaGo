@@ -3,6 +3,7 @@ package com.example.pantago;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -27,6 +28,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,65 +37,66 @@ import java.util.List;
 public class PantFragment extends Fragment {
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
-    RecyclerView.Adapter mAdapter;
-    List<PantListObject> pantlist;
+    ArrayList<PantListObject> pantlist = new ArrayList<PantListObject>();
+    PantAdapter mAdapter = new PantAdapter(pantlist);
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+    }
 
     @SuppressLint("ResourceType")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        if(savedInstanceState != null) {
+            pantlist = savedInstanceState.getParcelableArrayList("list");
+            mAdapter.notifyDataSetChanged();
+            Log.i(MapsActivity.TAG, String.valueOf(pantlist.get(0).getPant().getQuantity()));
+            mAdapter = new PantAdapter(pantlist);
+        }
         View rootView = inflater.inflate(R.layout.fragment_item_list, container, false);
+        mAdapter.addContext(getActivity());
+
+        rootView.setBackgroundColor(Color.GRAY);
         recyclerView = (RecyclerView)rootView.findViewById(R.id.list);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
-        pantlist = new ArrayList<PantListObject>();
-        FirebaseDatabase.getInstance().getReference().child("pants").addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                double latitude = pant.getLatitude();
-                double longitude = pant.getLongitude();
-                LatLng latlng = new LatLng(latitude, longitude);
-                FirebaseStorage.getInstance().getReference().child("Pictures/"+dataSnapshot.getKey()+".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-                    @Override
-                    public void onSuccess(byte[] bytes) {
-                        Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                        pantlist.add(new PantListObject(pant, map, 3/*MapsActivity.getDistance(latitude, longitude, getArguments().getDouble("my_lan"),  getArguments().getDouble("my_lon"))*/));
-                        mAdapter = new PantAdapter(pantlist);
-                        recyclerView.setAdapter(mAdapter);
-                    }
-                });
-
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
+        recyclerView.setAdapter(mAdapter);
        return  rootView;
     }
 
-    @SuppressLint("ResourceType")
-    public void setAdapter(List<PantListObject> pantList){
 
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelableArrayList("list", pantlist);
     }
 
+    public void addPant(Pant pant, double myLan, double myLon){
+        FirebaseStorage.getInstance().getReference().child("Pictures/"+pant.getPantKey()+".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                pantlist.add(new PantListObject(pant, map, MapsActivity.getDistance(pant.getLatitude(), pant.getLongitude(), myLan, myLon)));
+                sort();
+                refreshDistance(myLan,myLon);
+            }
+        });
+    }
+
+    public void sort(){
+        Collections.sort(pantlist);
+        mAdapter.notifyDataSetChanged();
+    }
+    public void refreshDistance(Double myLan, Double myLon){
+        for(PantListObject plo : pantlist){
+            Pant pant = plo.getPant();
+           plo.distance = MapsActivity.getDistance(pant.getLatitude(), pant.getLongitude(), myLan, myLon);
+        }
+        mAdapter.notifyDataSetChanged();
+    }
 }

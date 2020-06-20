@@ -40,6 +40,21 @@
         map:layout_constraintTop_toTopOf="parent"
         android:layout_gravity="center_horizontal|bottom"
         />
+
+        <Button
+            android:id="@+id/listButton"
+            android:layout_width="181dp"
+            android:layout_height="57dp"
+            android:text="List"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            map:layout_constraintBottom_toBottomOf="parent"
+            map:layout_constraintEnd_toEndOf="parent"
+            map:layout_constraintStart_toStartOf="parent"
+            map:layout_constraintTop_toTopOf="parent"
+            android:layout_gravity="center_horizontal|top"
+            />
+
     </fragment>
     </FrameLayout>
 

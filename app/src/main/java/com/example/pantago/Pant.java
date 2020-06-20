@@ -1,5 +1,9 @@
 package com.example.pantago;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.text.ParcelableSpan;
+
 import com.google.android.gms.maps.model.Marker;
 
 public class Pant {
@@ -21,9 +25,17 @@ public class Pant {
         this.latitude = latitude;
 
     }
+
     public Pant(){
 
     }
+
+    public Pant(Parcel in){
+        this.description = in.readString();
+    }
+
+
+
     public int getQuantity() {
         return quantity;
     }
@@ -47,6 +59,7 @@ public class Pant {
     public void setPantMarkerID(String markerID){ this.markerID = markerID; }
 
     public String getPantMarkerID(){ return markerID; }
+
 
     public String getOwnerUID() { return ownerUID; }
 

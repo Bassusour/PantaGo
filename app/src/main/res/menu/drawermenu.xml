@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-<item android:id="@+id/db" android:title="dashboard" />
+    <menu app:showAsAction="always" />
+    <item
+        android:title="Item"
+        app:showAsAction="always" />
+    <item android:id="@+id/db" android:title="dashboard" />
     <item android:id="@+id/event" android:title="Event" />
     <item android:id="@+id/search" android:title="Search" />
     <item android:id="@+id/setting" android:title="Settings" />
     <item android:id="@+id/activities" android:title="Activities" />
     <item android:id="@+id/logout" android:title="Logout" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="List"
+        app:showAsAction="always" />
 </menu>

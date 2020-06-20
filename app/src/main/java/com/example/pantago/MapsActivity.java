@@ -36,6 +36,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
@@ -62,6 +63,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -71,7 +73,7 @@ public class MapsActivity extends AppCompatActivity
     private static final int LAUNCH_POST = 1;
     private static final int LAUNCH_CLAIM = 2;
     private static final int LAUNCH_REMOVE = 3;
-    private static final String TAG = "pantaGo";
+    public static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
     private ActionBarDrawerToggle mToggle;
@@ -88,6 +90,7 @@ public class MapsActivity extends AppCompatActivity
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
+    private static final int PANT_ZOOM= 10;
     private static final int DEFAULT_ZOOM = 15;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
@@ -107,14 +110,21 @@ public class MapsActivity extends AppCompatActivity
 
     FragmentManager fragmentManager;
 
+
     Button postButton;
+    Button listButton;
     private Geocoder geocoder;
     private MapsActivity mContext;
     List<PantListObject> pantlist;
+    private Button goToList;
+
+    PantFragment listFragment = new PantFragment();
+    private SupportMapFragment mapFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
         setContentView(R.layout.activity_maps);
         mContext = this;
 
@@ -129,8 +139,8 @@ public class MapsActivity extends AppCompatActivity
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
-        getSupportActionBar().hide();
+
+
         fragmentManager = getSupportFragmentManager();
 
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
@@ -150,13 +160,16 @@ public class MapsActivity extends AppCompatActivity
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+       mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
 
+
+
         pantlist = new ArrayList<PantListObject>();
         postButton = findViewById(R.id.postButton);
+        listButton = findViewById(R.id.listButton);
         databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -175,6 +188,7 @@ public class MapsActivity extends AppCompatActivity
                     address = thoroughfare + " " + subThoroughfare + ", " + postalCode + " " + city;
                 } catch (Exception e) {
                     e.printStackTrace();
+                    address = "no address";
                 }
 
                 LatLng latlng = new LatLng(latitude, longitude);
@@ -186,8 +200,13 @@ public class MapsActivity extends AppCompatActivity
                 pant.marker = mark;
                 pants.add(pant);
 
-                Log.i(TAG, "Resumed");
-                Log.i(TAG, String.valueOf(markers.size()));
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        lastKnownLocation = location;
+                        listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                    }
+                });
             }
 
             @Override
@@ -232,11 +251,14 @@ public class MapsActivity extends AppCompatActivity
 
             }
         });
+
     }
 
     protected void onResume(){
         super.onResume();
     }
+
+
 
 
 
@@ -276,19 +298,22 @@ public class MapsActivity extends AppCompatActivity
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
+        listButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentTransaction transaction = fragmentManager.beginTransaction();
+                transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
+                transaction.addToBackStack(null);
+                transaction.add(R.id.frameLayout, listFragment);
+                transaction.commit();
+            }
+        });
 
         postButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
                     return;
                 }
                 fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -308,13 +333,7 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onInfoWindowClick(Marker marker) {
                 if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+
                     return;
                 }
                 fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -587,4 +606,15 @@ public class MapsActivity extends AppCompatActivity
        double c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
         return r*c;
     }
+
+    public void zoomToPant(Pant pant){
+       FragmentTransaction transaction = fragmentManager.beginTransaction();
+       transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
+       transaction.remove( listFragment);
+       transaction.commit();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(pant.getLatitude(),
+                        pant.getLongitude()), PANT_ZOOM));
+    }
 }
+
