@@ -69,6 +69,7 @@ public class ClaimActivity extends AppCompatActivity {
         StorageReference storageReference = firebaseStorage.getReference();
 
         String key = intent.getStringExtra("pantKey");
+        Log.i(TAG, key);
 
         DatabaseReference pantRef = databaseReference.child("pants").child(key);
         pantRef.addValueEventListener(new ValueEventListener() {

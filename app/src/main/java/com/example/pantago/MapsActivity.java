@@ -98,7 +98,7 @@ public class MapsActivity extends AppCompatActivity
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
-    private static final int PANT_ZOOM= 10;
+    private static final int PANT_ZOOM = 10;
     private static final int DEFAULT_ZOOM = 15;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
@@ -142,17 +142,15 @@ public class MapsActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         headerView = navigationView.getHeaderView(0);
 
-        mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
-        if(mDrawerLayout == null){
-            Log.e(TAG,"mDraweLayout is null");
+        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
+        if (mDrawerLayout == null) {
+            Log.e(TAG, "mDraweLayout is null");
         }
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         Log.i(TAG, "test4");
         updateUI(user);
-
-
 
 
         fragmentManager = getSupportFragmentManager();
@@ -171,11 +169,9 @@ public class MapsActivity extends AppCompatActivity
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-       mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-
 
 
         pantlist = new ArrayList<PantListObject>();
@@ -213,6 +209,9 @@ public class MapsActivity extends AppCompatActivity
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
 
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
                 fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
@@ -309,37 +308,7 @@ public class MapsActivity extends AppCompatActivity
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                        Pant pant = new Pant();
-                        for (int i = 0; i < pants.size(); i++) {
-                            if (pants.get(i).marker.getId().equals(marker.getId())) {
-                                pant = pants.get(i);
-                            }
-                        }
-                        if(currentUser.getUid().equals(pant.getOwnerUID())){
-                            Log.i(TAG, pant.getOwnerUID());
-                            Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
-                            intent.putExtra("id", marker.getId());
-                            startActivityForResult(intent, LAUNCH_REMOVE);
-                        }else {
-                            lastKnownLocation = location;
-                            Intent intent = new Intent(MapsActivity.this, ClaimActivity.class);
-                            intent.putExtra("longitudeUser", lastKnownLocation.getLongitude());
-                            intent.putExtra("latitudeUser", lastKnownLocation.getLatitude());
-                            intent.putExtra("longitudeMarker", marker.getPosition().longitude);
-                            intent.putExtra("latitudeMarker", marker.getPosition().latitude);
-                            intent.putExtra("id", marker.getId());
-                            startActivityForResult(intent, LAUNCH_CLAIM);
-                        }
-                    }
-                });
 
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 Pant pant = new Pant();
