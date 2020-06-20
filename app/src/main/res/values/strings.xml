@@ -39,7 +39,7 @@
     <string name="amount_format">Antal: </string>
     <string name="post_button">LÆG OP</string>
     <string name="remove_button">FJERN</string>
-    <string name="welcome_back">Velkomen tilbage </string>
+    <string name="welcome_back">Velkomen tilbage: </string>
     <string name="fill_fieds">Udfyld venligst begge felter</string>
     <string name="auth_failed">Godkendelse fejlet</string>
     <string name="email_required">Email påkrævet</string>
