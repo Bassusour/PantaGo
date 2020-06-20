@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">PantaGo</string>
     <string name="go_to_maps">Go to maps</string>
-    <string name="title_activity_maps">PandaGo</string>
+    <string name="title_activity_maps">PantaGo</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
