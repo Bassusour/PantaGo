@@ -77,15 +77,35 @@ public class PantFragment extends Fragment {
     }
 
     public void addPant(Pant pant, double myLan, double myLon){
-        FirebaseStorage.getInstance().getReference().child("Pictures/"+pant.getPantKey()+".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                pantlist.add(new PantListObject(pant, map, MapsActivity.getDistance(pant.getLatitude(), pant.getLongitude(), myLan, myLon)));
-                sort();
-                refreshDistance(myLan,myLon);
+        Log.i(MapsActivity.TAG, "Added pant to list");
+        Boolean isThere = false;
+        for(PantListObject pantListObject : pantlist){
+            if(pantListObject.getPant().getPantKey().equals(pant.getPantKey())){
+                isThere = true;
+
             }
-        });
+        }
+        if(!isThere) {
+            FirebaseStorage.getInstance().getReference().child("Pictures/" + pant.getPantKey() + ".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    pantlist.add(new PantListObject(pant, map, MapsActivity.getDistance(pant.getLatitude(), pant.getLongitude(), myLan, myLon)));
+                    sort();
+                    refreshDistance(myLan, myLon);
+                }
+            });
+        }
+    }
+
+    public void removePant(Pant pant){
+        for(PantListObject pantListObject : pantlist){
+            if(pantListObject.getPant().getPantKey().equals(pant.getPantKey())){
+                pantlist.remove(pantListObject);
+                mAdapter.notifyDataSetChanged();
+                return;
+            }
+        }
     }
 
     public void sort(){

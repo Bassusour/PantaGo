@@ -47,6 +47,9 @@ public class ClaimActivity extends AppCompatActivity {
     FusedLocationProviderClient fusedLocationProviderClient;
     private ClaimActivity mContext;
 
+    private double maxCollectDistance = 0.05;
+    private double maxClaimDistance = 3.0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,32 +88,25 @@ public class ClaimActivity extends AppCompatActivity {
             }
         });
 
+
+
         DatabaseReference pantRef = databaseReference.child("pants").child( key);
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String ammount = getString(R.string.object_label);
+                String comment = getString(R.string.comment);
+
                 if (dataSnapshot.exists()) {
                     Pant pant = dataSnapshot.getValue(Pant.class);
-                    String ammount = getString(R.string.object_label);
-                    String comment = getString(R.string.comment);
-
-                    textViewQuantity.setText(ammount + pant.getQuantity() + "");
-                    textViewDescription.setText(comment + pant.getDescription());
-
                     String claimerUID = pant.getClaimerUID();
                     if (currentUser.equals(claimerUID)) {
-                        claim.setText("UNCLAIM");
-                        if (dataSnapshot.exists()) {
-
-                            if (currentUser.equals(claimerUID)) {
-                                claim.setText("UNCLAIM");
-                                collectButton.setVisibility(View.VISIBLE);
-                            }
-                        }
-
+                        claim.setText(getResources().getString(R.string.unclaim_button));
+                        collectButton.setVisibility(View.VISIBLE);
                     }
-                } else {
-                    Toast.makeText(mContext, "The pant has been removed or collected.", Toast.LENGTH_LONG).show();
+                    textViewQuantity.setText(pant.getQuantity() + "");
+                    textViewDescription.setText(pant.getDescription());
+                }else {
                     finish();
                 }
             }
@@ -131,18 +127,18 @@ public class ClaimActivity extends AppCompatActivity {
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
-                    if (claim.getText().equals("UNCLAIM")) {
+                    if (claim.getText().equals(getResources().getString(R.string.unclaim_button))) {
                         pantRef.child("claimerUID").setValue("");
                         finish();
                     }
 
-                    if (claim.getText().equals("CLAIM")) {
-                        if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.001) {
+                    if (claim.getText().equals(getResources().getString(R.string.claim_button))) {
+                        if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxClaimDistance) {
                             pantRef.child("claimerUID").setValue(currentUser);
                             finish();
                         } else {
                             double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                            Toast.makeText(mContext, "You have to get closer to claim! There is " +String.format("%.1f", len)+ " km to the marker.", Toast.LENGTH_LONG).show();
+                            Toast.makeText(mContext, getResources().getString(R.string.far_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.far_toast_second), Toast.LENGTH_LONG).show();
                         }
                     }
                 }
@@ -151,24 +147,34 @@ public class ClaimActivity extends AppCompatActivity {
 
         });
 
-        collectButton.setOnClickListener(v -> {
-            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-               return;
-            }
-            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.000001) {
-                        pantRef.removeValue();
-                        finish();
-                    } else {
-                        double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                        Toast.makeText(mContext, "You have to get closer to collect! There is " +String.format("%.1f", len)+ " km to the marker.", Toast.LENGTH_LONG).show();
-                    }
+        collectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+                    return;
                 }
-            });
+                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxCollectDistance) {
+                            pantRef.removeValue();
+                            finish();
+                        }else {
+                            double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
+                            Toast.makeText(mContext, getResources().getString(R.string.collect_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.collect_toast_second), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
 
-      });
+          }
+       });
 
     }
 

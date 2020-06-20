@@ -18,8 +18,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,9 +62,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -80,6 +85,11 @@ public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
     public static final String TAG = "pantaGo";
+    double userLat;
+    double userLong;
+    double dist;
+    int minP;
+    double maxDist;
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
     private ActionBarDrawerToggle mToggle;
@@ -88,6 +98,9 @@ public class MapsActivity extends AppCompatActivity
     private View headerView;
 
     private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
+
+    Spinner minPant;
+    Spinner maxRad;
 
     FirebaseAuth firebaseAuth;
 
@@ -127,13 +140,24 @@ public class MapsActivity extends AppCompatActivity
     PantFragment listFragment = new PantFragment();
     private SupportMapFragment mapFragment;
 
+    private String[] minPantOptions = {getResources().getString(R.string.none), "1", "5", "10", "15", "20", "30"};
+    private String[] maxRadOptions = {getResources().getString(R.string.none), "1.0", "1.5", "2.0", "2.5", "3.0", "5.0"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+        }
         setContentView(R.layout.activity_maps);
         mContext = this;
 
         firebaseAuth = FirebaseAuth.getInstance();
+
 
         FirebaseUser user = firebaseAuth.getCurrentUser();
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
@@ -141,6 +165,7 @@ public class MapsActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         headerView = navigationView.getHeaderView(0);
 
+        //UI
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
         if (mDrawerLayout == null) {
             Log.e(TAG, "mDraweLayout is null");
@@ -148,7 +173,6 @@ public class MapsActivity extends AppCompatActivity
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        Log.i(TAG, "test4");
         updateUI(user);
 
 
@@ -174,11 +198,51 @@ public class MapsActivity extends AppCompatActivity
 
 
         pantlist = new ArrayList<PantListObject>();
+        minPant = (Spinner) navigationView.getMenu().findItem(R.id.minPant).getActionView();
+        minPant.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, minPantOptions));
+        minPant.setSelected(false);  // must
+        minPant.setSelection(0,true);
+
+
+        minPant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG, "amount select called");
+                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        maxRad = (Spinner) navigationView.getMenu().findItem(R.id.maxRad).getActionView();
+        maxRad.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, maxRadOptions));
+        maxRad.setSelected(false);  // must
+        maxRad.setSelection(0,true);
+
+        maxRad.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG, "radius selected called");
+                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         postButton = findViewById(R.id.postButton);
         listButton = findViewById(R.id.listButton);
         databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Log.i(TAG, "onAdded() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 double latitude = pant.getLatitude();
                 double longitude = pant.getLongitude();
@@ -194,7 +258,7 @@ public class MapsActivity extends AppCompatActivity
                     address = thoroughfare + " " + subThoroughfare + ", " + postalCode + " " + city;
                 } catch (Exception e) {
                     e.printStackTrace();
-                    address = "no address";
+                    address = getResources().getString(R.string.no_adress);
                 }
 
                 LatLng latlng = new LatLng(latitude, longitude);
@@ -207,20 +271,11 @@ public class MapsActivity extends AppCompatActivity
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
 
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        lastKnownLocation = location;
-                        listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
-                    }
-                });
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Log.i(TAG, "onChange() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 decideVisible(currentUser, pant);
@@ -230,6 +285,11 @@ public class MapsActivity extends AppCompatActivity
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 markerMap.get(pant.getPantKey()).remove();
+                pants.remove(getPantFromKey(pant.getPantKey()));
+                markerMap.remove(getPantFromKey(pant.getPantKey()));
+                listFragment.removePant(pant);
+                //decideVisible(firebaseAuth.getCurrentUser(), pant);
+
             }
 
             @Override
@@ -299,7 +359,6 @@ public class MapsActivity extends AppCompatActivity
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 Pant pant =(Pant) marker.getTag();
                 if(currentUser.getUid().equals(pant.getOwnerUID())){
-                    Log.i(TAG, pant.getOwnerUID());
                     Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
                     intent.putExtra("id", marker.getId());
                     intent.putExtra("pantKey", pant.getPantKey());
@@ -415,29 +474,62 @@ public class MapsActivity extends AppCompatActivity
             if(listFragment.isAdded()){
                 transaction.remove(listFragment);
                 transaction.commit();
-                item.setTitle("liste");
+                item.setTitle(getResources().getString(R.string.list));
             } else {
                 mDrawerLayout.closeDrawer(GravityCompat.START);
                 transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
                 transaction.addToBackStack(null);
                 transaction.add(R.id.frameLayout, listFragment);
                 transaction.commit();
-                item.setTitle("tilbage");
+                item.setTitle(getResources().getString(R.string.back));
             }
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void decideVisible(FirebaseUser currentUser, Pant pant){
-            if (pant.getClaimerUID().equals("")) {
-                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                markerMap.get(pant.getPantKey()).setVisible(true);
-            } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
-                markerMap.get(pant.getPantKey()).setVisible(true);
-                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-            } else {
-                markerMap.get(pant.getPantKey()).setVisible(false);
+        if(markerMap.get(pant.getPantKey())==null){
+            return;
+        }
+
+        double markerlat = pant.getLatitude();
+        double markerLong = pant.getLongitude();
+
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                userLat = location.getLatitude();
+                userLong = location.getLongitude();
+                dist = getDistance(userLat, userLong, markerlat, markerLong);
+                dist = dist / 1000.0;
+                if (!minPant.getSelectedItem().equals(getResources().getString(R.string.none))) {
+                    minP = Integer.parseInt((String) minPant.getSelectedItem());
+                } else {
+                    minP = 0;
+                }
+
+                if (!maxRad.getSelectedItem().equals(getResources().getString(R.string.none))) {
+                    maxDist = Double.valueOf((String) maxRad.getSelectedItem());
+                } else {
+                    maxDist = 1000000.0;
+                }
+                if (pant.getClaimerUID().equals("") && pant.getQuantity() >= minP && dist < maxDist) {
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                    markerMap.get(pant.getPantKey()).setVisible(true);
+                    listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
+                    markerMap.get(pant.getPantKey()).setVisible(true);
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                    listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                } else {
+                    markerMap.get(pant.getPantKey()).setVisible(false);
+                    listFragment.removePant(pant);
+                }
             }
+        });
     }
 
    @Override
@@ -456,7 +548,6 @@ public class MapsActivity extends AppCompatActivity
 
     private void updateUI(FirebaseUser user){
         if(user != null){
-            Log.i(TAG, "test1");
             TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
             TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
@@ -464,7 +555,6 @@ public class MapsActivity extends AppCompatActivity
             email.setText(user.getEmail().toString());
             title.setText("title: starter");
             if(user.getPhotoUrl() != null){
-                Log.i(TAG, "test2");
                 String photoUrl = user.getPhotoUrl().toString();
                 photoUrl = photoUrl + "?type=large";
                 Picasso.get().load(photoUrl).into(userImage);
@@ -473,6 +563,20 @@ public class MapsActivity extends AppCompatActivity
             }
         }
     }
+
+
+    public Pant getPantFromKey(String key){
+        Pant pant = new Pant();
+        for(Pant pant1 : pants){
+            if(pant1.getPantKey().equals(key)){
+                pant = pant1;
+
+            }
+        }
+        return pant;
+    }
+
+    // [END maps_current_place_update_location_ui]
 
    public static double getDistance(double lat1, double lon1, double lat2, double lon2){
         double r = 6371000;

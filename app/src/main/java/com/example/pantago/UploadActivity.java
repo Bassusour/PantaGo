@@ -114,7 +114,7 @@ public class UploadActivity extends AppCompatActivity {
                 Log.i(TAG, "onClick()");
                 try{
                     if(!sAmount.isEmpty()){
-                        if(isInteger(sAmount)) {
+                        if(isPositiveInteger(sAmount)) {
                             if(bitmap != null){
                                 int amount = Integer.parseInt(sAmount);
                                 String comment = commentText.getText().toString();
@@ -169,14 +169,14 @@ public class UploadActivity extends AppCompatActivity {
                                 setResult(Activity.RESULT_OK, intent);
                                 finish();
                             }else{
-                                Toast toast = Toast.makeText(mContext,"Please insert a picture", Toast.LENGTH_SHORT);
+                                Toast toast = Toast.makeText(mContext,getResources().getString(R.string.insert_picture), Toast.LENGTH_SHORT);
                                 toast.show();
                             }
 
                         }else{
                             amountText.requestFocus();
-                            amountText.setError("Not a number");
-                            Toast toast = Toast.makeText(mContext,"Please insert a number", Toast.LENGTH_SHORT);
+                            amountText.setError("Not a valid number");
+                            Toast toast = Toast.makeText(mContext,getResources().getString(R.string.insert_number), Toast.LENGTH_SHORT);
                             //toast.show();
                         }
 
@@ -197,18 +197,23 @@ public class UploadActivity extends AppCompatActivity {
         });
     }
 
-    public boolean isInteger(String s){
+    public boolean isPositiveInteger(String s){
+        int i;
         boolean isValidInteger = false;
         try
         {
-            Integer.parseInt(s);
+            i = Integer.parseInt(s);
             // s is a valid integer
             isValidInteger = true;
+            if(i < 1){
+                isValidInteger = false;
+            }
         }
         catch (NumberFormatException ex)
         {
             // s is not an integer
         }
+
         return isValidInteger;
     }
 

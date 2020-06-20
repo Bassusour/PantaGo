@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-
+<!--
     <item
         android:id="@+id/db"
         android:title="dashboard" />
     <item android:id="@+id/event" android:title="Event" />
     <item android:id="@+id/search" android:title="Search" />
     <item android:id="@+id/setting" android:title="Settings" />
-    <item android:id="@+id/activities" android:title="Activities" />
-    <item android:id="@+id/logout" android:title="Logout" />
+    <item android:id="@+id/activities" android:title="Activities" /> -->
+    <item android:id="@+id/logout" android:title="Logout"
+        android:icon="@drawable/logout"/>
+    <item android:id="@+id/minPant"
+        android:icon="@drawable/water"
+        android:title="Min amount Pant"
+        app:actionLayout="@layout/spinner_menu"/>
+    <item android:id="@+id/maxRad"
+        android:icon="@drawable/ruler"
+        android:title="Max Radius (in Km)"
+        app:actionLayout="@layout/spinner_menu"/>
     <item android:id="@+id/list" android:title="list" />
 
 </menu>
