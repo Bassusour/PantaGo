@@ -13,6 +13,8 @@ import android.media.Image;
 import android.os.Bundle;
 
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -59,7 +62,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -274,17 +276,6 @@ public class MapsActivity extends AppCompatActivity
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
-        listButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentTransaction transaction = fragmentManager.beginTransaction();
-                transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
-                transaction.addToBackStack(null);
-                transaction.add(R.id.frameLayout, listFragment);
-                transaction.commit();
-            }
-        });
-
         postButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -348,6 +339,12 @@ public class MapsActivity extends AppCompatActivity
 
     }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.tool_bar, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
     /**
      * Gets the current location of the device, and positions the map's camera.
@@ -460,6 +457,21 @@ public class MapsActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(mToggle.onOptionsItemSelected(item)){
             return true;
+        }
+        if(item.getItemId() == R.id.listButton){
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
+
+            if(listFragment.isAdded()){
+                transaction.remove(listFragment);
+                transaction.commit();
+            } else {
+                mDrawerLayout.closeDrawer(GravityCompat.START);
+                transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
+                transaction.addToBackStack(null);
+                transaction.add(R.id.frameLayout, listFragment);
+                transaction.commit();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
