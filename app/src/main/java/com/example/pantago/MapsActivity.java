@@ -415,12 +415,14 @@ public class MapsActivity extends AppCompatActivity
             if(listFragment.isAdded()){
                 transaction.remove(listFragment);
                 transaction.commit();
+                item.setTitle("liste");
             } else {
                 mDrawerLayout.closeDrawer(GravityCompat.START);
                 transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
                 transaction.addToBackStack(null);
                 transaction.add(R.id.frameLayout, listFragment);
                 transaction.commit();
+                item.setTitle("tilbage");
             }
         }
         return super.onOptionsItemSelected(item);
@@ -459,7 +461,7 @@ public class MapsActivity extends AppCompatActivity
             TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
 
-            email.setText("email: " + user.getEmail().toString());
+            email.setText(user.getEmail().toString());
             title.setText("title: starter");
             if(user.getPhotoUrl() != null){
                 Log.i(TAG, "test2");
