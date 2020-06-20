@@ -9,7 +9,8 @@
     <string name="upload_button">UPLOAD</string>
     <string name="number_of_objects">How many bottles/cans?</string>
     <string name="comment_hint">Comment (Optional)</string>
-    <string name="object_label">Amount of bottles/cans:</string>
+    <string name="comment">Comment: </string>
+    <string name="object_label">Amount of bottles/cans: </string>
     <string name="camera_icon_text">Click to upload your picture</string>
     <string name="go_to_createUser">Create User</string>
     <string name="open">Open</string>

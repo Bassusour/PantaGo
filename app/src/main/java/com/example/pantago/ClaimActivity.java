@@ -2,6 +2,7 @@ package com.example.pantago;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -9,6 +10,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 
 import com.example.pantago.Pant;
@@ -31,6 +34,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.TextView;;
 
 public class ClaimActivity extends AppCompatActivity {
@@ -51,6 +55,7 @@ public class ClaimActivity extends AppCompatActivity {
         Button claim = (Button) findViewById(R.id.buttonClaim);
         TextView textViewQuantity = findViewById(R.id.textViewClaimQuantity);
         TextView textViewDescription = findViewById(R.id.textViewClaimDescription);
+        ImageView imageViewPant = findViewById(R.id.imageViewPant);
         Button collectButton = findViewById(R.id.buttonCollect);
         collectButton.setVisibility(View.INVISIBLE);
 
@@ -71,14 +76,28 @@ public class ClaimActivity extends AppCompatActivity {
         String key = intent.getStringExtra("pantKey");
         Log.i(TAG, key);
 
-        DatabaseReference pantRef = databaseReference.child("pants").child(key);
+
+        FirebaseStorage.getInstance().getReference().child("Pictures/"+key+".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Bitmap map = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                imageViewPant.setImageBitmap(map);
+
+            }
+        });
+
+
+
+        DatabaseReference pantRef = databaseReference.child("pants").child( key);
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Pant pant = dataSnapshot.getValue(Pant.class);
+                String ammount = getString(R.string.object_label);
+                String comment = getString(R.string.comment);
 
-                textViewQuantity.setText(pant.getQuantity() + "");
-                textViewDescription.setText(pant.getDescription());
+                textViewQuantity.setText(ammount + pant.getQuantity() + "");
+                textViewDescription.setText(comment + pant.getDescription());
 
                 String claimerUID = pant.getClaimerUID();
                 if (currentUser.equals(claimerUID)) {
