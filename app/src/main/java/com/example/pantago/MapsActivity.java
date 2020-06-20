@@ -546,7 +546,6 @@ public class MapsActivity extends AppCompatActivity
         if(user != null){
             Log.i(TAG, "test1");
             TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
-            TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
 
             email.setText(user.getEmail().toString());

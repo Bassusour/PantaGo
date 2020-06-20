@@ -78,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
         if(mFirebaseAuth.getCurrentUser()!=null){
             FirebaseUser user = mFirebaseAuth.getCurrentUser();
             String userEmail = user.getEmail().toString();
-            Toast.makeText(LoginActivity.this, getResources().getString(R.string.welcome_back) + userEmail,
+            Toast.makeText(LoginActivity.this, getResources().getString(R.string.welcome_back) + " " + userEmail,
                     Toast.LENGTH_LONG).show();
             Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
             startActivity(intent);
