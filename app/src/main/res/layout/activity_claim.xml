@@ -10,17 +10,14 @@ tools:context=".ClaimActivity">
         android:id="@+id/buttonClaim"
         android:layout_width="181dp"
         android:layout_height="57dp"
-        android:layout_marginTop="631dp"
-        android:layout_marginBottom="97dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/claim_button_shape"
         android:text="@string/claim_button"
         android:textColor="#FFFFFF"
         android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/buttonCollect"
@@ -40,13 +37,13 @@ tools:context=".ClaimActivity">
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
-        android:layout_marginTop="40dp"
+        android:layout_marginBottom="76dp"
         android:text="TextView"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintBottom_toTopOf="@+id/buttonCollect"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewPant" />
+        app:layout_constraintHorizontal_bias="0.473"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textViewClaimDescription"
