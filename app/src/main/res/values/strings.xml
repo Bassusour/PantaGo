@@ -4,7 +4,7 @@
     <string name="go_to_maps">Go to maps</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_login">LoginActivity</string>
-    <string name="prompt_email">Email</string>
+    <string name="prompt_email">Mailadresse</string>
     <string name="prompt_password">Kodeord</string>
     <string name="claim_button">RESERVER</string>
     <string name="upload_button">LÆG OP</string>
@@ -42,8 +42,8 @@
     <string name="welcome_back">Velkomen tilbage: </string>
     <string name="fill_fieds">Udfyld venligst begge felter</string>
     <string name="auth_failed">Godkendelse fejlet</string>
-    <string name="email_required">Email påkrævet</string>
-    <string name="invalid_email">Ugyldig email adresse</string>
+    <string name="email_required">Mailadresse påkrævet</string>
+    <string name="invalid_email">Ugyldig mailadresse adresse</string>
     <string name="password_required">Kodeord påkrævet</string>
     <string name="password_longer">Kodeord skal være længere</string>
     <string name="password_match">Kodeord er ikke identiske</string>
@@ -52,7 +52,8 @@
     <string name="logout">Log ud</string>
     <string name="min_ammount_pant">Min antal pant</string>
     <string name="max_distance">Max afstand</string>
-
-
-
+    <string name="new_user">Ny bruger?</string>
+    <string name="sign_up"><u>Opret dig</u></string>
+    <string name="login">Log ind</string>
+    <string name="continue_with_facebook">Fortsæt med Facebook</string>
 </resources>

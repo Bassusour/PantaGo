@@ -35,7 +35,7 @@
             android:id="@+id/email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="E-mail"
+            android:hint="@string/prompt_email"
             android:inputType="textEmailAddress" />
 
         <EditText
@@ -43,10 +43,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:hint="Password"
+            android:hint="@string/prompt_password"
             android:inputType="textPassword" />
 
         <com.facebook.login.widget.LoginButton
+            xmlns:facebook="http://schemas.android.com/apk/res-auto"
+            facebook:com_facebook_login_text="@string/continue_with_facebook"
             android:id="@+id/fbLogin"
             android:layout_width="match_parent"
             android:layout_height="18dp"
@@ -60,7 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:backgroundTint="@color/colorAccent"
-            android:text="Login"
+            android:text="@string/login"
             android:textColor="#ffffff" />
 
         <LinearLayout
