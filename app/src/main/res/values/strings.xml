@@ -52,6 +52,7 @@
     <string name="logout">Log ud</string>
     <string name="min_ammount_pant">Min antal pant</string>
     <string name="max_distance">Max afstand</string>
+    <string name="tag_et_billede_af_panten">Tag et billede af panten</string>
     <string name="new_user">Ny bruger?</string>
     <string name="sign_up"><u>Opret dig</u></string>
     <string name="login">Log ind</string>

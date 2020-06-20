@@ -96,6 +96,7 @@ public class MapsActivity extends AppCompatActivity
     private DrawerLayout mDrawerLayout;
     private NavigationView navigationView;
     private View headerView;
+    private MenuItem menuItem;
 
     private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
 
@@ -460,6 +461,7 @@ public class MapsActivity extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        menuItem = item;
         if(mToggle.onOptionsItemSelected(item)){
             return true;
         }
@@ -587,6 +589,7 @@ public class MapsActivity extends AppCompatActivity
     }
 
     public void zoomToPant(Pant pant){
+        menuItem.setTitle("Liste");
        FragmentTransaction transaction = fragmentManager.beginTransaction();
        transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
        transaction.remove( listFragment);
