@@ -29,6 +29,7 @@ public class RemoveActivity extends AppCompatActivity {
 
     String TAG = "pandaGo";
     FirebaseAuth firebaseAuth;
+    Pant pant;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,13 +60,13 @@ public class RemoveActivity extends AppCompatActivity {
 
             }
         });
-        DatabaseReference pantRef = databaseReference.child("pants").child( key);
+        DatabaseReference pantRef = databaseReference.child("pants").child(key);
 
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()){
-                    Pant pant = dataSnapshot.getValue(Pant.class);
+                    pant = dataSnapshot.getValue(Pant.class);
                     String ammount = getString(R.string.object_label);
                     String comment = getString(R.string.comment);
                     textViewQuantity.setText(ammount + pant.getQuantity() + "");
@@ -83,6 +84,8 @@ public class RemoveActivity extends AppCompatActivity {
         remove.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                databaseReference.child("claimers").child(pant.getClaimerUID()).removeValue();
                 pantRef.removeValue();
                 setResult(Activity.RESULT_OK, getIntent());
                 finish();
