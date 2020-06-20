@@ -37,7 +37,8 @@ public class PantAdapter extends RecyclerView.Adapter<PantAdapter.ViewHolder> {
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
         holder.mThumbnail.setImageBitmap(mValues.get(position).getBitmap());
-        holder.mAntalText.setText(String.format("Antal: %s", holder.mItem.getPant().getQuantity()));
+        String quantity = mContext.getResources().getString(R.string.amount_format);
+        holder.mAntalText.setText(String.format("%s %s", quantity, holder.mItem.getPant().getQuantity()));
         holder.mAfstandNumb.setText(String.format("%.1f km",holder.mItem.getDistance()/1000));
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -76,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
         if(mFirebaseAuth.getCurrentUser()!=null){
             FirebaseUser user = mFirebaseAuth.getCurrentUser();
             String userEmail = user.getEmail().toString();
-            Toast.makeText(LoginActivity.this, "Welcome back " + userEmail,
+            Toast.makeText(LoginActivity.this, getResources().getString(R.string.welcome_back) + userEmail,
                     Toast.LENGTH_LONG).show();
             Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
             startActivity(intent);
@@ -132,7 +132,7 @@ public class LoginActivity extends AppCompatActivity {
                 String password = passwordInput.getText().toString();
 
                 if(email.length() <= 0 || password.length() <= 0) {
-                    Toast.makeText(LoginActivity.this, "Indtast et input",
+                    Toast.makeText(LoginActivity.this,getResources().getString(R.string.fill_fieds) ,
                             Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -151,7 +151,7 @@ public class LoginActivity extends AppCompatActivity {
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(LoginActivity.this, "Godkendelse fejlet",
+                                    Toast.makeText(LoginActivity.this, getResources().getString(R.string.auth_failed),
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -184,7 +184,7 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else {
                     Log.d(TAG,"sign in with credential failed", task.getException());
-                    Toast.makeText(LoginActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getResources().getString(R.string.auth_failed), Toast.LENGTH_SHORT).show();
                 }
             }
         });

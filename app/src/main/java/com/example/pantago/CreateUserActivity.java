@@ -48,28 +48,28 @@ public class CreateUserActivity extends AppCompatActivity {
                 String sPassword = password.getText().toString();
                 String sPassword2 = password2.getText().toString();
                 if(sEmail.isEmpty()){
-                    email.setError("Email required");
+                    email.setError(getResources().getString(R.string.email_required));
                     return;
                 }
                 if(!sEmail.trim().matches(emailPattern)){
-                    email.setError("Invalid email address");
+                    email.setError(getResources().getString(R.string.invalid_email));
                     return;
                 }
                 if(sPassword.isEmpty()){
-                    password.setError("Password required");
+                    password.setError(getResources().getString(R.string.password_required));
                     return;
                 }
                 if(sPassword2.isEmpty()){
-                    password2.setError("Password required");
+                    password2.setError(getResources().getString(R.string.password_required));
                     return;
                 }
                 if(sPassword.length()<6){
-                    password.setError("Password must be longer");
+                    password.setError(getResources().getString(R.string.password_longer));
                     return;
                 }
                 if(!sPassword.equals(sPassword2)){
-                    password.setError("Password does not match");
-                    password2.setError("Password does not match");
+                    password.setError(getResources().getString(R.string.password_match));
+                    password2.setError(getResources().getString(R.string.password_match));
                     return;
                 }
 
@@ -81,14 +81,14 @@ public class CreateUserActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
                             //Log.d(TAG, "createUserWithEmail:success");
-                            Toast.makeText(CreateUserActivity.this, "User creation successful.",
+                            Toast.makeText(CreateUserActivity.this, getResources().getString(R.string.user_creation),
                                     Toast.LENGTH_SHORT).show();
                             FirebaseUser user = firebaseAuth.getCurrentUser();
-                            Toast.makeText(CreateUserActivity.this, "Welcome to PantaGo",
+                            Toast.makeText(CreateUserActivity.this, getResources().getString(R.string.welcome_pantago),
                                     Toast.LENGTH_SHORT).show();
                             updateUI(user);
                         }else{
-                            Toast.makeText(CreateUserActivity.this, "Authentication failed.",
+                            Toast.makeText(CreateUserActivity.this, getResources().getString(R.string.auth_failed),
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }

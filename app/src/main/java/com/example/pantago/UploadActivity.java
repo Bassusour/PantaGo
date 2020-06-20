@@ -175,7 +175,7 @@ public class UploadActivity extends AppCompatActivity {
 
                         }else{
                             amountText.requestFocus();
-                            amountText.setError("Not a valid number");
+                            amountText.setError(getResources().getString(R.string.not_number));
                             Toast toast = Toast.makeText(mContext,getResources().getString(R.string.insert_number), Toast.LENGTH_SHORT);
                             //toast.show();
                         }
@@ -185,8 +185,8 @@ public class UploadActivity extends AppCompatActivity {
                     }else{
                         Log.i(TAG, "in toast");
                         amountText.requestFocus();
-                        amountText.setError("No amount given");
-                        Toast toast = Toast.makeText(mContext,"Please fill amount of bottles/cans", Toast.LENGTH_SHORT);
+                        amountText.setError(getResources().getString(R.string.no_amount));
+                        Toast toast = Toast.makeText(mContext,getResources().getString(R.string.fill_amount), Toast.LENGTH_SHORT);
                         //toast.show();
                     }
 

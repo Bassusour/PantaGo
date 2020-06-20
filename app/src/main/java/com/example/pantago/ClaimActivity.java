@@ -136,7 +136,7 @@ public class ClaimActivity extends AppCompatActivity {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 if(dataSnapshot.exists()){
-                                    Toast.makeText(mContext, "You have to collect or unclaim before claiming a second item", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(mContext, getResources().getString(R.string.cannot_claim), Toast.LENGTH_LONG).show();
 
                                 }else{
                                     if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxClaimDistance) {
