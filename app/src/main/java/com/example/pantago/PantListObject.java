@@ -28,7 +28,6 @@ public class PantListObject implements Comparable<PantListObject>, Parcelable {
         pant.setClaimerUID(in.readString());
         pant.setOwnerUID(in.readString());
         pant.setClaimerUID(in.readString());
-        pant.setClaimed(in.readInt()>-1 ? true:false);
         this.pant = parcelPant;
         this.distance = in.readDouble();
 
@@ -85,7 +84,6 @@ public class PantListObject implements Comparable<PantListObject>, Parcelable {
         parcel.writeString(pant.getPantKey());
         parcel.writeString(pant.getOwnerUID());
         parcel.writeString(pant.getClaimerUID());
-        parcel.writeInt(pant.getClaimed() ? 1:0);
         parcel.writeDouble(distance);
         ByteArrayOutputStream baos= new ByteArrayOutputStream();
         bitmap.compress(Bitmap. CompressFormat. PNG, 100, baos);
