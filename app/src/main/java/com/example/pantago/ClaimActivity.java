@@ -146,7 +146,7 @@ public class ClaimActivity extends AppCompatActivity {
 
                                     } else {
                                         double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                                        Toast.makeText(mContext, getResources().getString(R.string.far_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.far_toast_second), Toast.LENGTH_LONG).show();
+                                        Toast.makeText(mContext, getResources().getString(R.string.far_toast_first) + " " +String.format("%.1f", len)+ getResources().getString(R.string.far_toast_second), Toast.LENGTH_LONG).show();
                                     }
                                 }
                             }
@@ -178,7 +178,7 @@ public class ClaimActivity extends AppCompatActivity {
                         finish();
                     } else {
                         double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                        Toast.makeText(mContext, getResources().getString(R.string.collect_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.collect_toast_second), Toast.LENGTH_LONG).show();
+                        Toast.makeText(mContext, getResources().getString(R.string.collect_toast_first) + " " +String.format("%.1f", len)+ getResources().getString(R.string.collect_toast_second), Toast.LENGTH_LONG).show();
                     }
                 }
             });
