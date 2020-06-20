@@ -102,8 +102,8 @@ public class ClaimActivity extends AppCompatActivity {
                         claim.setText(getResources().getString(R.string.unclaim_button));
                         collectButton.setVisibility(View.VISIBLE);
                     }
-                    textViewQuantity.setText(pant.getQuantity() + "");
-                    textViewDescription.setText(pant.getDescription());
+                    textViewQuantity.setText(ammount + pant.getQuantity() + "");
+                    textViewDescription.setText(comment + pant.getDescription());
                 }else {
                     finish();
                 }
