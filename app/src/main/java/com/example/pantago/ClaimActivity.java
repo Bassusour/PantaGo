@@ -174,6 +174,7 @@ public class ClaimActivity extends AppCompatActivity {
                 public void onSuccess(Location location) {
                     if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxCollectDistance) {
                         pantRef.removeValue();
+                        databaseReference.child("claimers").child(currentUser).removeValue();
                         finish();
                     } else {
                         double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
