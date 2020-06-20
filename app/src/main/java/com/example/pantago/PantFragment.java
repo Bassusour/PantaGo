@@ -59,7 +59,7 @@ public class PantFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_item_list, container, false);
         mAdapter.addContext(getActivity());
 
-        rootView.setBackgroundColor(Color.GRAY);
+        rootView.setBackgroundColor(getResources().getColor(R.color.darkgray));
         recyclerView = (RecyclerView)rootView.findViewById(R.id.list);
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getActivity());
