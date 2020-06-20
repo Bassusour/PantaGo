@@ -549,11 +549,9 @@ public class MapsActivity extends AppCompatActivity
     private void updateUI(FirebaseUser user){
         if(user != null){
             TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
-            TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
 
             email.setText(user.getEmail().toString());
-            title.setText("title: starter");
             if(user.getPhotoUrl() != null){
                 String photoUrl = user.getPhotoUrl().toString();
                 photoUrl = photoUrl + "?type=large";

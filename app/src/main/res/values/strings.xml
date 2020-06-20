@@ -1,4 +1,5 @@
 <resources>
+
     <string name="app_name">PantaGo</string>
     <string name="go_to_maps">Gå til kort</string>
     <string name="title_activity_maps">PantaGo</string>
@@ -31,23 +32,26 @@
     <string name="collect_toast_second"> km til panten.</string>
     <string name="insert_picture">Venligst indsæt billede</string>
     <string name="insert_number">Indsæt venligst tal</string>
-    <string name="cannot_claim">You have to collect or unclaim before claiming a second item</string>
-    <string name="not_number">Not a valid number</string>
-    <string name="no_amount">No amount given</string>
-    <string name="fill_amount">Please fill amount of bottles/cans</string>
-    <string name="amount_format">Amount: </string>
-    <string name="post_button">POST</string>
-    <string name="remove_button">REMOVE</string>
-    <string name="welcome_back">Welcome back </string>
-    <string name="fill_fieds">Please fill in both fields</string>
-    <string name="auth_failed">Authentication failed</string>
-    <string name="email_required">Email required</string>
-    <string name="invalid_email">Invalid email address</string>
-    <string name="password_required">Password required</string>
-    <string name="password_longer">Password must be longer</string>
-    <string name="password_match">Passwords do not match</string>
-    <string name="user_creation">User creation successful</string>
-    <string name="welcome_pantago">Welcome to PantaGo</string>
+    <string name="cannot_claim">Du skal afhente eller afbestille før du kan reservere</string>
+    <string name="not_number">Ikke et gyldigt nummer</string>
+    <string name="no_amount">Intet antal givet</string>
+    <string name="fill_amount">Udfyld venligst antal dåser/flasker</string>
+    <string name="amount_format">Antal: </string>
+    <string name="post_button">LÆG OP</string>
+    <string name="remove_button">FJERN</string>
+    <string name="welcome_back">Velkomen tilbage </string>
+    <string name="fill_fieds">Udfyld venligst begge felter</string>
+    <string name="auth_failed">Godkendelse fejlet</string>
+    <string name="email_required">Email påkrævet</string>
+    <string name="invalid_email">Ugyldig email adresse</string>
+    <string name="password_required">Kodeord påkrævet</string>
+    <string name="password_longer">Kodeord skal være længere</string>
+    <string name="password_match">Kodeord er ikke identiske</string>
+    <string name="user_creation">Bruger oprettelse lykkedes</string>
+    <string name="welcome_pantago">Velkommen til PantaGo</string>
+    <string name="logout">Log ud</string>
+    <string name="min_ammount_pant">Min antal pant</string>
+    <string name="max_distance">Max afstand</string>
 
 
 
