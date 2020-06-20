@@ -110,7 +110,7 @@ public class MapsActivity extends AppCompatActivity
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
-    private static final int PANT_ZOOM = 10;
+    private static final int PANT_ZOOM = 15;
     private static final int DEFAULT_ZOOM = 15;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
@@ -140,8 +140,8 @@ public class MapsActivity extends AppCompatActivity
     PantFragment listFragment = new PantFragment();
     private SupportMapFragment mapFragment;
 
-    private String[] minPantOptions = {getResources().getString(R.string.none), "1", "5", "10", "15", "20", "30"};
-    private String[] maxRadOptions = {getResources().getString(R.string.none), "1.0", "1.5", "2.0", "2.5", "3.0", "5.0"};
+    private String[] minPantOptions = {"None", "1", "5", "10", "15", "20", "30"};
+    private String[] maxRadOptions = {"None", "1.0", "1.5", "2.0", "2.5", "3.0", "5.0"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

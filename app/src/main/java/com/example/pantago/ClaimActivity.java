@@ -88,8 +88,6 @@ public class ClaimActivity extends AppCompatActivity {
             }
         });
 
-
-
         DatabaseReference pantRef = databaseReference.child("pants").child( key);
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -129,17 +127,37 @@ public class ClaimActivity extends AppCompatActivity {
                 public void onSuccess(Location location) {
                     if (claim.getText().equals(getResources().getString(R.string.unclaim_button))) {
                         pantRef.child("claimerUID").setValue("");
+                        databaseReference.child("claimers").child(currentUser).removeValue();
                         finish();
                     }
 
                     if (claim.getText().equals(getResources().getString(R.string.claim_button))) {
-                        if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxClaimDistance) {
-                            pantRef.child("claimerUID").setValue(currentUser);
-                            finish();
-                        } else {
-                            double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                            Toast.makeText(mContext, getResources().getString(R.string.far_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.far_toast_second), Toast.LENGTH_LONG).show();
-                        }
+                        databaseReference.child("claimers").child(currentUser).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                if(dataSnapshot.exists()){
+                                    Toast.makeText(mContext, "You have to collect or unclaim before claiming a second item", Toast.LENGTH_LONG).show();
+
+                                }else{
+                                    if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxClaimDistance) {
+                                        pantRef.child("claimerUID").setValue(currentUser);
+                                        databaseReference.child("claimers").child(currentUser).setValue(currentUser);
+                                        finish();
+
+                                    } else {
+                                        double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
+                                        Toast.makeText(mContext, getResources().getString(R.string.far_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.far_toast_second), Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+
+
                     }
                 }
             });
@@ -147,34 +165,24 @@ public class ClaimActivity extends AppCompatActivity {
 
         });
 
-        collectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxCollectDistance) {
-                            pantRef.removeValue();
-                            finish();
-                        }else {
-                            double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
-                            Toast.makeText(mContext, getResources().getString(R.string.collect_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.collect_toast_second), Toast.LENGTH_LONG).show();
-                        }
+        collectButton.setOnClickListener(v -> {
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+               return;
+            }
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (MapsActivity.getDistance(location.getLatitude(), location.getLongitude(), latitudeMarker, longitudeMarker)/1000.0 < maxCollectDistance) {
+                        pantRef.removeValue();
+                        finish();
+                    } else {
+                        double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
+                        Toast.makeText(mContext, getResources().getString(R.string.collect_toast_first) +String.format("%.1f", len)+ getResources().getString(R.string.collect_toast_second), Toast.LENGTH_LONG).show();
                     }
-                });
+                }
+            });
 
-          }
-       });
+      });
 
     }
 
