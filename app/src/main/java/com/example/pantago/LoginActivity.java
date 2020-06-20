@@ -3,6 +3,7 @@ package com.example.pantago;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
@@ -22,6 +23,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +32,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,7 +62,6 @@ public class LoginActivity extends AppCompatActivity {
         mFirebaseAuth = FirebaseAuth.getInstance();
         FacebookSdk.sdkInitialize(getApplicationContext());
 
-        textViewUser = findViewById(R.id.text_user);
         image = findViewById(R.id.imageView);
         fbLogin = findViewById(R.id.fbLogin);
         fbLogin.setPermissions("email", "public_profile");
@@ -67,12 +70,11 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.password);
 
         //Saved state
-        if(savedInstanceState != null){
+        if(savedInstanceState != null) {
             emailInput.setText(savedInstanceState.getString(KEY_EMAIL));
             passwordInput.setText(savedInstanceState.getString(KEY_PASSWORD));
         }
 
-        //Auto login
         if(mFirebaseAuth.getCurrentUser()!=null){
             FirebaseUser user = mFirebaseAuth.getCurrentUser();
             String userEmail = user.getEmail().toString();
@@ -115,15 +117,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         };
-
-        //Create user
-        Button buttonCreateUser = findViewById(R.id.buttonCreateNewUser);
-        buttonCreateUser.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent intent = new Intent(LoginActivity.this, CreateUserActivity.class);
-                startActivity(intent);
-            }
-        });
 
         //Login with email and password
         loginBtn.setOnClickListener(new View.OnClickListener(){
@@ -209,5 +202,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstansteState);
         savedInstansteState.putString(KEY_EMAIL, emailInput.getText().toString());
         savedInstansteState.putString(KEY_PASSWORD, passwordInput.getText().toString());
+    }
+
+    public void signUp(View v) {
+        Intent intent = new Intent(LoginActivity.this, CreateUserActivity.class);
+        startActivity(intent);
     }
 }

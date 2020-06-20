@@ -3,8 +3,10 @@
     <color name="colorPrimary">#795548</color>
     <color name="colorPrimaryDark">#5D4037</color>
     <color name="white">#ffffff</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="grey">#808080</color>
+    <color name="colorAccent">#0097C8</color>
     <color name="darkgray">#6c6c6c</color>
     <color name="buttonColor">#15873D</color>
     <color name="buttonRed">#E82B2B</color>
+    <color name="colorGreen">#44AB46</color>
 </resources>

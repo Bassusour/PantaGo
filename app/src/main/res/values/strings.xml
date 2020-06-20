@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">PantaGo</string>
-    <string name="go_to_maps">Gå til kort</string>
-    <string name="title_activity_maps">PantaGo</string>
-    <string name="title_activity_login">Login Aktivitet</string>
+    <string name="go_to_maps">Go to maps</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_login">LoginActivity</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Kodeord</string>
     <string name="claim_button">RESERVER</string>

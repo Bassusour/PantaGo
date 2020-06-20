@@ -251,11 +251,8 @@ public class MapsActivity extends AppCompatActivity
 
                 try {
                     List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    String thoroughfare = addresses.get(0).getThoroughfare();
-                    String subThoroughfare = addresses.get(0).getSubThoroughfare();
-                    String city = addresses.get(0).getLocality();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " + subThoroughfare + ", " + postalCode + " " + city;
+                    String addressLine = addresses.get(0).getAddressLine(0);
+                    address = addressLine.substring(0, addressLine.length() - 9);
                 } catch (Exception e) {
                     e.printStackTrace();
                     address = getResources().getString(R.string.no_adress);
@@ -289,7 +286,6 @@ public class MapsActivity extends AppCompatActivity
                 markerMap.remove(getPantFromKey(pant.getPantKey()));
                 listFragment.removePant(pant);
                 //decideVisible(firebaseAuth.getCurrentUser(), pant);
-
             }
 
             @Override
@@ -355,10 +351,10 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onInfoWindowClick(Marker marker) {
 
-
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 Pant pant =(Pant) marker.getTag();
                 if(currentUser.getUid().equals(pant.getOwnerUID())){
+                    Log.i(TAG, pant.getOwnerUID());
                     Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
                     intent.putExtra("id", marker.getId());
                     intent.putExtra("pantKey", pant.getPantKey());
@@ -548,12 +544,12 @@ public class MapsActivity extends AppCompatActivity
 
     private void updateUI(FirebaseUser user){
         if(user != null){
+            Log.i(TAG, "test1");
             TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
             TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
 
             email.setText(user.getEmail().toString());
-            title.setText("title: starter");
             if(user.getPhotoUrl() != null){
                 String photoUrl = user.getPhotoUrl().toString();
                 photoUrl = photoUrl + "?type=large";
@@ -576,7 +572,6 @@ public class MapsActivity extends AppCompatActivity
         return pant;
     }
 
-    // [END maps_current_place_update_location_ui]
 
    public static double getDistance(double lat1, double lon1, double lat2, double lon2){
         double r = 6371000;
