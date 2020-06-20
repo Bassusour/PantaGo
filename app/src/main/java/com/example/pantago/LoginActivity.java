@@ -49,7 +49,6 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "FacebookAuthentication";
     private static final String KEY_EMAIL = "email_key";
     private static final String KEY_PASSWORD = "password_key";
-    private boolean orientation = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,19 +74,16 @@ public class LoginActivity extends AppCompatActivity {
             passwordInput.setText(savedInstanceState.getString(KEY_PASSWORD));
         }
 
-        if(mFirebaseAuth.getCurrentUser()!=null && orientation == false){
+        //Auto login
+        if(mFirebaseAuth.getCurrentUser()!=null){
             FirebaseUser user = mFirebaseAuth.getCurrentUser();
             String userEmail = user.getEmail().toString();
             Toast.makeText(LoginActivity.this, "Welcome back " + userEmail,
                     Toast.LENGTH_LONG).show();
-            updateUI(user);
-            //textViewUser.setText("logged in as2: " + userEmail.toString());
             Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
             startActivity(intent);
             finish();
         }
-
-
 
         //Callbackmanager registers the state of the login
         mCallbackManager = CallbackManager.Factory.create();
@@ -96,10 +92,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "onSuccess" + loginResult);
                 handleFacebookToken(loginResult.getAccessToken());
-                //Intent intent = new Intent(LoginActivity.this, LoginActivity.class);
-                //startActivity(intent);
             }
-
             @Override
             public void onCancel() {
                 Log.d(TAG, "onCancel");
@@ -112,16 +105,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         //Listener which checks when authenticator changes (login or logout)
-        authStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if(user != null){
-                    updateUI(user);
-                } else {
-                    updateUI(null);
-                }
-            }
+        authStateListener = firebaseAuth -> {
         };
 
         //Checks if signed in or out
@@ -134,8 +118,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-
-
+        //Create user
         Button buttonCreateUser = findViewById(R.id.buttonCreateNewUser);
         buttonCreateUser.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -163,22 +146,16 @@ public class LoginActivity extends AppCompatActivity {
                                     // Sign in success, update UI with the signed-in user's information
                                     Log.d(TAG, "signInWithEmail:success");
                                     FirebaseUser user = mFirebaseAuth.getCurrentUser();
-                                    updateUI(user);
                                     Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                                    LoginManager.getInstance().logOut();
-                                    updateUI(user);
+                                    LoginManager.getInstance().logOut(); //Logger ud af facebook
                                     startActivity(intent);
                                     finish();
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(LoginActivity.this, "Authentication failed.",
+                                    Toast.makeText(LoginActivity.this, "Godkendelse fejlet",
                                             Toast.LENGTH_SHORT).show();
-                                    // updateUI(null);
-                                    // ...
                                 }
-
-                                // ...
                             }
                         });
             }
@@ -191,13 +168,11 @@ public class LoginActivity extends AppCompatActivity {
         //Gives callbackmanager data
         mCallbackManager.onActivityResult(requestCode, resultCode, data);
         super.onActivityResult(requestCode, resultCode, data);
-
     }
 
     //Checks validity for facebook credentials
     private void handleFacebookToken(AccessToken token) {
         Log.d(TAG, "handleFacebookToken"+token);
-
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
         mFirebaseAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
@@ -205,7 +180,6 @@ public class LoginActivity extends AppCompatActivity {
                 if(task.isSuccessful()){
                     Log.d(TAG,"sign in with credential successful");
                     FirebaseUser user = mFirebaseAuth.getCurrentUser();
-                    updateUI(user);
                     emailInput.setText("");
                     passwordInput.setText("");
                     Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
@@ -213,25 +187,9 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     Log.d(TAG,"sign in with credential failed", task.getException());
                     Toast.makeText(LoginActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show();
-                    //updateUI(null);
                 }
             }
         });
-    }
-
-    private void updateUI(FirebaseUser user){
-        if(user != null){
-            textViewUser.setText("logged in as: " + user.getEmail().toString());
-            if(user.getPhotoUrl() != null){
-                String photoUrl = user.getPhotoUrl().toString();
-                photoUrl = photoUrl + "?type=large";
-                Picasso.get().load(photoUrl).into(image);
-            }
-        }
-        else {
-            textViewUser.setText("");
-            image.setImageResource(R.drawable.panda_logo1);
-        }
     }
 
     @Override
@@ -253,19 +211,5 @@ public class LoginActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstansteState);
         savedInstansteState.putString(KEY_EMAIL, emailInput.getText().toString());
         savedInstansteState.putString(KEY_PASSWORD, passwordInput.getText().toString());
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Checks the orientation of the screen
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            orientation = true;
-            Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-            orientation = true;
-        }
     }
 }
