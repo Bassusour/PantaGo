@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -11,21 +13,30 @@ import android.media.Image;
 import android.os.Bundle;
 
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -34,8 +45,10 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -48,8 +61,12 @@ import com.google.android.gms.tasks.Task;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,6 +76,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -66,10 +84,12 @@ import com.squareup.picasso.Picasso;
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
-    private static final int LAUNCH_POST = 1;
-    private static final int LAUNCH_CLAIM = 2;
-    private static final int LAUNCH_REMOVE = 3;
-    private static final String TAG = "pantaGo";
+    public static final String TAG = "pantaGo";
+    double userLat;
+    double userLong;
+    double dist;
+    int minP;
+    double maxDist;
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
     private ActionBarDrawerToggle mToggle;
@@ -79,6 +99,9 @@ public class MapsActivity extends AppCompatActivity
 
     private HashMap<String, Marker> markerMap = new HashMap<String, Marker>();
 
+    Spinner minPant;
+    Spinner maxRad;
+
     FirebaseAuth firebaseAuth;
 
     // The entry point to the Fused Location Provider.
@@ -87,6 +110,7 @@ public class MapsActivity extends AppCompatActivity
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng defaultLocation = new LatLng(-33.8523341, 151.2106085);
+    private static final int PANT_ZOOM = 15;
     private static final int DEFAULT_ZOOM = 15;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean locationPermissionGranted;
@@ -103,23 +127,37 @@ public class MapsActivity extends AppCompatActivity
 
     ArrayList<Pant> pants;
 
+    FragmentManager fragmentManager;
+
+
     Button postButton;
+    Button listButton;
     private Geocoder geocoder;
     private MapsActivity mContext;
+    List<PantListObject> pantlist;
+    private Button goToList;
+
+    PantFragment listFragment = new PantFragment();
+    private SupportMapFragment mapFragment;
+
+    private String[] minPantOptions = {"None", "1", "5", "10", "15", "20", "30"};
+    private String[] maxRadOptions = {"None", "1.0", "1.5", "2.0", "2.5", "3.0", "5.0"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+        }
         setContentView(R.layout.activity_maps);
         mContext = this;
 
-
-
-
-
-
-
         firebaseAuth = FirebaseAuth.getInstance();
+
 
         FirebaseUser user = firebaseAuth.getCurrentUser();
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
@@ -128,17 +166,17 @@ public class MapsActivity extends AppCompatActivity
         headerView = navigationView.getHeaderView(0);
 
         //UI
-        mToggle = new ActionBarDrawerToggle(this,mDrawerLayout,R.string.open,R.string.close);
-        if(mDrawerLayout == null){
-            Log.e(TAG,"mDraweLayout is null");
+        mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
+        if (mDrawerLayout == null) {
+            Log.e(TAG, "mDraweLayout is null");
         }
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        Log.i(TAG, "test4");
         updateUI(user);
 
 
+        fragmentManager = getSupportFragmentManager();
 
         geocoder = new Geocoder(this, getResources().getConfiguration().locale);
 
@@ -154,14 +192,57 @@ public class MapsActivity extends AppCompatActivity
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
+        pantlist = new ArrayList<PantListObject>();
+        minPant = (Spinner) navigationView.getMenu().findItem(R.id.minPant).getActionView();
+        minPant.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, minPantOptions));
+        minPant.setSelected(false);  // must
+        minPant.setSelection(0,true);
+
+
+        minPant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG, "amount select called");
+                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        maxRad = (Spinner) navigationView.getMenu().findItem(R.id.maxRad).getActionView();
+        maxRad.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, maxRadOptions));
+        maxRad.setSelected(false);  // must
+        maxRad.setSelection(0,true);
+
+        maxRad.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG, "radius selected called");
+                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
         postButton = findViewById(R.id.postButton);
+        listButton = findViewById(R.id.listButton);
         databaseReference.child("pants").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Log.i(TAG, "onAdded() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 double latitude = pant.getLatitude();
                 double longitude = pant.getLongitude();
@@ -174,9 +255,10 @@ public class MapsActivity extends AppCompatActivity
                     String subThoroughfare = addresses.get(0).getSubThoroughfare();
                     String city = addresses.get(0).getLocality();
                     String postalCode = addresses.get(0).getPostalCode();
-                    address = thoroughfare + " " +  subThoroughfare + ", " + postalCode + " " + city;
+                    address = thoroughfare + " " + subThoroughfare + ", " + postalCode + " " + city;
                 } catch (Exception e) {
                     e.printStackTrace();
+                    address = getResources().getString(R.string.no_adress);
                 }
 
                 LatLng latlng = new LatLng(latitude, longitude);
@@ -184,26 +266,16 @@ public class MapsActivity extends AppCompatActivity
                         .title(address)
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                pant.marker = mark;
-
+                mark.setTag(pant);
                 markerMap.put(pant.getPantKey(), mark);
-
-                /*if(FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(true);
-                }else if(!FirebaseAuth.getInstance().getCurrentUser().getUid().equals(pant.getClaimerUID()) && pant.getClaimed()){
-                    pant.marker.setVisible(false);
-                }else{
-                    pant.marker.setVisible(true);
-                }*/
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
 
-                Log.i(TAG, "Resumed");
             }
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Log.i(TAG, "onChildChanged() called");
+                Log.i(TAG, "onChange() called");
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
                 decideVisible(currentUser, pant);
@@ -213,6 +285,9 @@ public class MapsActivity extends AppCompatActivity
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 markerMap.get(pant.getPantKey()).remove();
+                pants.remove(getPantFromKey(pant.getPantKey()));
+                markerMap.remove(getPantFromKey(pant.getPantKey()));
+                listFragment.removePant(pant);
                 //decideVisible(firebaseAuth.getCurrentUser(), pant);
 
             }
@@ -229,10 +304,6 @@ public class MapsActivity extends AppCompatActivity
         });
     }
 
-    /**
-     * Saves the state of the map when the activity is paused.
-     */
-    // [START maps_current_place_on_save_instance_state]
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (mMap != null) {
@@ -242,7 +313,7 @@ public class MapsActivity extends AppCompatActivity
         super.onSaveInstanceState(outState);
     }
 
-   @Override
+    @Override
     public void onMapReady(GoogleMap map) {
         this.mMap = map;
 
@@ -259,26 +330,24 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        lastKnownLocation = location;
-                        Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
-                        intent.putExtra("latitude", lastKnownLocation.getLatitude());
-                        intent.putExtra("longitude", lastKnownLocation.getLongitude());
-                        startActivity(intent);
+                try {
+                    if (locationPermissionGranted) {
+                        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                lastKnownLocation = location;
+                                Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
+                                intent.putExtra("latitude", lastKnownLocation.getLatitude());
+                                intent.putExtra("longitude", lastKnownLocation.getLongitude());
+                                startActivity(intent);
+                            }
+                        });
                     }
-                });
+                } catch (SecurityException e)  {
+                    Log.e("Exception: %s", e.getMessage(), e);
+                }
+
+
             }
         });
 
@@ -286,15 +355,10 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onInfoWindowClick(Marker marker) {
 
+
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                Pant pant = new Pant();
-                for (int i = 0; i < pants.size(); i++) {
-                    if (pants.get(i).marker.getId().equals(marker.getId())) {
-                        pant = pants.get(i);
-                    }
-                }
+                Pant pant =(Pant) marker.getTag();
                 if(currentUser.getUid().equals(pant.getOwnerUID())){
-                    Log.i(TAG, pant.getOwnerUID());
                     Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
                     intent.putExtra("id", marker.getId());
                     intent.putExtra("pantKey", pant.getPantKey());
@@ -311,29 +375,16 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
-        /*
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.remove();
-                return false;
-            }
-        });
-        */
-
 
     }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.tool_bar, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
-
-    /**
-     * Gets the current location of the device, and positions the map's camera.
-     */
-    private void getDeviceLocation() {
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        try {
+   private void getDeviceLocation() {
+       try {
             if (locationPermissionGranted) {
                 Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
                 locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
@@ -362,19 +413,9 @@ public class MapsActivity extends AppCompatActivity
             Log.e("Exception: %s", e.getMessage(), e);
         }
     }
-    // [END maps_current_place_get_device_location]
 
-    /**
-     * Prompts the user for permission to use the device location.
-     */
-    // [START maps_current_place_location_permission]
-    private void getLocationPermission() {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+   private void getLocationPermission() {
+       if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
@@ -384,13 +425,8 @@ public class MapsActivity extends AppCompatActivity
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
     }
-    // [END maps_current_place_location_permission]
 
-    /**
-     * Handles the result of the request for location permissions.
-     */
-    // [START maps_current_place_on_request_permissions_result]
-    @Override
+   @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -406,14 +442,8 @@ public class MapsActivity extends AppCompatActivity
         }
         updateLocationUI();
     }
-    // [END maps_current_place_on_request_permissions_result]
 
-
-    /**
-     * Updates the map's UI settings based on whether the user has granted location permission.
-     */
-    // [START maps_current_place_update_location_ui]
-    private void updateLocationUI() {
+   private void updateLocationUI() {
         if (mMap == null) {
             return;
         }
@@ -437,25 +467,72 @@ public class MapsActivity extends AppCompatActivity
         if(mToggle.onOptionsItemSelected(item)){
             return true;
         }
+        if(item.getItemId() == R.id.listButton){
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
+
+            if(listFragment.isAdded()){
+                transaction.remove(listFragment);
+                transaction.commit();
+                item.setTitle(getResources().getString(R.string.list));
+            } else {
+                mDrawerLayout.closeDrawer(GravityCompat.START);
+                transaction.setCustomAnimations(R.anim.slidein, R.anim.slidein);
+                transaction.addToBackStack(null);
+                transaction.add(R.id.frameLayout, listFragment);
+                transaction.commit();
+                item.setTitle(getResources().getString(R.string.back));
+            }
+        }
         return super.onOptionsItemSelected(item);
     }
 
     public void decideVisible(FirebaseUser currentUser, Pant pant){
-            if (pant.getClaimerUID().equals("")) {
-                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                markerMap.get(pant.getPantKey()).setVisible(true);
-            } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
-                markerMap.get(pant.getPantKey()).setVisible(true);
-                markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
-            } else {
-                markerMap.get(pant.getPantKey()).setVisible(false);
+        if(markerMap.get(pant.getPantKey())==null){
+            return;
+        }
+
+        double markerlat = pant.getLatitude();
+        double markerLong = pant.getLongitude();
+
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                userLat = location.getLatitude();
+                userLong = location.getLongitude();
+                dist = getDistance(userLat, userLong, markerlat, markerLong);
+                dist = dist / 1000.0;
+                if (!minPant.getSelectedItem().equals(getResources().getString(R.string.none))) {
+                    minP = Integer.parseInt((String) minPant.getSelectedItem());
+                } else {
+                    minP = 0;
+                }
+
+                if (!maxRad.getSelectedItem().equals(getResources().getString(R.string.none))) {
+                    maxDist = Double.valueOf((String) maxRad.getSelectedItem());
+                } else {
+                    maxDist = 1000000.0;
+                }
+                if (pant.getClaimerUID().equals("") && pant.getQuantity() >= minP && dist < maxDist) {
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                    markerMap.get(pant.getPantKey()).setVisible(true);
+                    listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                } else if (currentUser.getUid().equals(pant.getClaimerUID()) || currentUser.getUid().equals(pant.getOwnerUID())) {
+                    markerMap.get(pant.getPantKey()).setVisible(true);
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+                    listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                } else {
+                    markerMap.get(pant.getPantKey()).setVisible(false);
+                    listFragment.removePant(pant);
+                }
             }
+        });
     }
 
-    /**
-     * Method for what item from the drawer was clicked
-     */
-    @Override
+   @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
         switch (menuItem.getItemId()){
             case R.id.logout:
@@ -471,15 +548,13 @@ public class MapsActivity extends AppCompatActivity
 
     private void updateUI(FirebaseUser user){
         if(user != null){
-            Log.i(TAG, "test1");
             TextView email = (TextView) headerView.findViewById(R.id.emailDrawer);
             TextView title = (TextView) headerView.findViewById(R.id.titleDrawer);
             ImageView userImage = (ImageView) headerView.findViewById(R.id.userImage);
 
-            email.setText("email: " + user.getEmail().toString());
+            email.setText(user.getEmail().toString());
             title.setText("title: starter");
             if(user.getPhotoUrl() != null){
-                Log.i(TAG, "test2");
                 String photoUrl = user.getPhotoUrl().toString();
                 photoUrl = photoUrl + "?type=large";
                 Picasso.get().load(photoUrl).into(userImage);
@@ -489,5 +564,41 @@ public class MapsActivity extends AppCompatActivity
         }
     }
 
+
+    public Pant getPantFromKey(String key){
+        Pant pant = new Pant();
+        for(Pant pant1 : pants){
+            if(pant1.getPantKey().equals(key)){
+                pant = pant1;
+
+            }
+        }
+        return pant;
+    }
+
     // [END maps_current_place_update_location_ui]
+
+   public static double getDistance(double lat1, double lon1, double lat2, double lon2){
+        double r = 6371000;
+        double phi1 = lat1 * Math.PI/180;
+        double phi2 = lat2 * Math.PI/180;
+        double deltaPhi = (lat2 -lat1) * Math.PI/180;
+        double deltaLambda = (lon2-lon1) * Math.PI/180;
+
+        double a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                        Math.sin(deltaLambda/2)* Math.sin(deltaLambda/2);
+       double c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        return r*c;
+    }
+
+    public void zoomToPant(Pant pant){
+       FragmentTransaction transaction = fragmentManager.beginTransaction();
+       transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
+       transaction.remove( listFragment);
+       transaction.commit();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(pant.getLatitude(),
+                        pant.getLongitude()), PANT_ZOOM));
+    }
 }
