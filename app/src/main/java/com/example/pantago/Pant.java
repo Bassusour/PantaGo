@@ -7,7 +7,6 @@ public class Pant {
     private int quantity;
     private double latitude,longitude;
     private String key;
-    Marker marker;
     private String ownerUID;
     private String claimerUID = "";
 

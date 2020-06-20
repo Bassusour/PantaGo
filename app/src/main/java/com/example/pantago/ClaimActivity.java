@@ -36,6 +36,8 @@ import com.google.firebase.storage.StorageReference;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;;
+import android.widget.Button;
+import android.widget.Toast;
 
 public class ClaimActivity extends AppCompatActivity {
 
@@ -59,8 +61,6 @@ public class ClaimActivity extends AppCompatActivity {
         Button collectButton = findViewById(R.id.buttonCollect);
         collectButton.setVisibility(View.INVISIBLE);
 
-
-
         Intent intent = getIntent();
         firebaseAuth = FirebaseAuth.getInstance();
 
@@ -76,7 +76,6 @@ public class ClaimActivity extends AppCompatActivity {
         String key = intent.getStringExtra("pantKey");
         Log.i(TAG, key);
 
-
         FirebaseStorage.getInstance().getReference().child("Pictures/"+key+".jpg").getBytes(Long.MAX_VALUE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
             @Override
             public void onSuccess(byte[] bytes) {
@@ -86,106 +85,90 @@ public class ClaimActivity extends AppCompatActivity {
             }
         });
 
-
-
         DatabaseReference pantRef = databaseReference.child("pants").child( key);
         pantRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Pant pant = dataSnapshot.getValue(Pant.class);
-                String ammount = getString(R.string.object_label);
-                String comment = getString(R.string.comment);
+                if (dataSnapshot.exists()) {
+                    Pant pant = dataSnapshot.getValue(Pant.class);
+                    String ammount = getString(R.string.object_label);
+                    String comment = getString(R.string.comment);
 
-                textViewQuantity.setText(ammount + pant.getQuantity() + "");
-                textViewDescription.setText(comment + pant.getDescription());
+                    textViewQuantity.setText(ammount + pant.getQuantity() + "");
+                    textViewDescription.setText(comment + pant.getDescription());
 
-                String claimerUID = pant.getClaimerUID();
-                if (currentUser.equals(claimerUID)) {
-                    claim.setText("UNCLAIM");
-                    if (dataSnapshot.exists()) {
+                    String claimerUID = pant.getClaimerUID();
+                    if (currentUser.equals(claimerUID)) {
+                        claim.setText("UNCLAIM");
+                        if (dataSnapshot.exists()) {
 
-                        if (currentUser.equals(claimerUID)) {
-                            claim.setText("UNCLAIM");
-                            collectButton.setVisibility(View.VISIBLE);
+                            if (currentUser.equals(claimerUID)) {
+                                claim.setText("UNCLAIM");
+                                collectButton.setVisibility(View.VISIBLE);
+                            }
                         }
+
                     }
-
+                } else {
+                    Toast.makeText(mContext, "The pant has been removed or collected.", Toast.LENGTH_LONG).show();
+                    finish();
                 }
-
-
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
-
-            ;
         });
 
         double latitudeMarker = intent.getDoubleExtra("latitudeMarker", 0);
         double longitudeMarker = intent.getDoubleExtra("longitudeMarker", 0);
 
+        claim.setOnClickListener(v -> {
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+               return;
+            }
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (claim.getText().equals("UNCLAIM")) {
+                        pantRef.child("claimerUID").setValue("");
+                        finish();
+                    }
 
-        claim.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (claim.getText().equals("UNCLAIM")) {
-                            pantRef.child("claimerUID").setValue("");
+                    if (claim.getText().equals("CLAIM")) {
+                        if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.001) {
+                            pantRef.child("claimerUID").setValue(currentUser);
                             finish();
-                        }
-
-                        if (claim.getText().equals("CLAIM")) {
-                            if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.001) {
-                                pantRef.child("claimerUID").setValue(currentUser);
-                                finish();
-                            }
+                        } else {
+                            double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
+                            Toast.makeText(mContext, "You have to get closer to claim! There is " +String.format("%.1f", len)+ " km to the marker.", Toast.LENGTH_LONG).show();
                         }
                     }
-                });
+                }
+            });
 
 
-            }
         });
 
-        collectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.000001) {
-                            pantRef.removeValue();
-                            finish();
-                        }
+        collectButton.setOnClickListener(v -> {
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+               return;
+            }
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (Math.pow(latitudeMarker - location.getLatitude(), 2) + Math.pow(longitudeMarker - location.getLongitude(), 2) <= 0.000001) {
+                        pantRef.removeValue();
+                        finish();
+                    } else {
+                        double len = MapsActivity.getDistance(latitudeMarker, longitudeMarker, location.getLatitude(), location.getLongitude())/1000;
+                        Toast.makeText(mContext, "You have to get closer to collect! There is " +String.format("%.1f", len)+ " km to the marker.", Toast.LENGTH_LONG).show();
                     }
-                });
+                }
+            });
 
-          }
-       });
+      });
 
     }
 

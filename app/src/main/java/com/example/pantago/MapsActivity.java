@@ -79,9 +79,6 @@ import com.squareup.picasso.Picasso;
 public class MapsActivity extends AppCompatActivity
         implements OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
-    private static final int LAUNCH_POST = 1;
-    private static final int LAUNCH_CLAIM = 2;
-    private static final int LAUNCH_REMOVE = 3;
     public static final String TAG = "pantaGo";
     private GoogleMap mMap;
     private CameraPosition cameraPosition;
@@ -205,8 +202,7 @@ public class MapsActivity extends AppCompatActivity
                         .title(address)
                         .snippet("Antal pant: " + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                pant.marker = mark;
-
+                mark.setTag(pant);
                 markerMap.put(pant.getPantKey(), mark);
                 pants.add(pant);
                 decideVisible(firebaseAuth.getCurrentUser(), pant);
@@ -234,8 +230,6 @@ public class MapsActivity extends AppCompatActivity
             public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
                 Pant pant = dataSnapshot.getValue(Pant.class);
                 markerMap.get(pant.getPantKey()).remove();
-                //decideVisible(firebaseAuth.getCurrentUser(), pant);
-
             }
 
             @Override
@@ -250,10 +244,6 @@ public class MapsActivity extends AppCompatActivity
         });
     }
 
-    /**
-     * Saves the state of the map when the activity is paused.
-     */
-    // [START maps_current_place_on_save_instance_state]
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         if (mMap != null) {
@@ -263,7 +253,7 @@ public class MapsActivity extends AppCompatActivity
         super.onSaveInstanceState(outState);
     }
 
-   @Override
+    @Override
     public void onMapReady(GoogleMap map) {
         this.mMap = map;
 
@@ -280,19 +270,24 @@ public class MapsActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
 
-                if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-                fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        lastKnownLocation = location;
-                        Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
-                        intent.putExtra("latitude", lastKnownLocation.getLatitude());
-                        intent.putExtra("longitude", lastKnownLocation.getLongitude());
-                        startActivity(intent);
+                try {
+                    if (locationPermissionGranted) {
+                        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                lastKnownLocation = location;
+                                Intent intent = new Intent(MapsActivity.this, UploadActivity.class);
+                                intent.putExtra("latitude", lastKnownLocation.getLatitude());
+                                intent.putExtra("longitude", lastKnownLocation.getLongitude());
+                                startActivity(intent);
+                            }
+                        });
                     }
-                });
+                } catch (SecurityException e)  {
+                    Log.e("Exception: %s", e.getMessage(), e);
+                }
+
+
             }
         });
 
@@ -302,12 +297,7 @@ public class MapsActivity extends AppCompatActivity
 
 
                 FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-                Pant pant = new Pant();
-                for (int i = 0; i < pants.size(); i++) {
-                    if (pants.get(i).marker.getId().equals(marker.getId())) {
-                        pant = pants.get(i);
-                    }
-                }
+                Pant pant =(Pant) marker.getTag();
                 if(currentUser.getUid().equals(pant.getOwnerUID())){
                     Log.i(TAG, pant.getOwnerUID());
                     Intent intent = new Intent(MapsActivity.this, RemoveActivity.class);
@@ -326,35 +316,16 @@ public class MapsActivity extends AppCompatActivity
             }
         });
 
-        /*
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.remove();
-                return false;
-            }
-        });
-        */
-
 
     }
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.tool_bar, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
-    /**
-     * Gets the current location of the device, and positions the map's camera.
-     */
-    private void getDeviceLocation() {
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
-        try {
+   private void getDeviceLocation() {
+       try {
             if (locationPermissionGranted) {
                 Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
                 locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
@@ -383,19 +354,9 @@ public class MapsActivity extends AppCompatActivity
             Log.e("Exception: %s", e.getMessage(), e);
         }
     }
-    // [END maps_current_place_get_device_location]
 
-    /**
-     * Prompts the user for permission to use the device location.
-     */
-    // [START maps_current_place_location_permission]
-    private void getLocationPermission() {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+   private void getLocationPermission() {
+       if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
@@ -405,13 +366,8 @@ public class MapsActivity extends AppCompatActivity
                     PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
         }
     }
-    // [END maps_current_place_location_permission]
 
-    /**
-     * Handles the result of the request for location permissions.
-     */
-    // [START maps_current_place_on_request_permissions_result]
-    @Override
+   @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -427,14 +383,8 @@ public class MapsActivity extends AppCompatActivity
         }
         updateLocationUI();
     }
-    // [END maps_current_place_on_request_permissions_result]
 
-
-    /**
-     * Updates the map's UI settings based on whether the user has granted location permission.
-     */
-    // [START maps_current_place_update_location_ui]
-    private void updateLocationUI() {
+   private void updateLocationUI() {
         if (mMap == null) {
             return;
         }
@@ -488,10 +438,7 @@ public class MapsActivity extends AppCompatActivity
             }
     }
 
-    /**
-     * Method for what item from the drawer was clicked
-     */
-    @Override
+   @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
         switch (menuItem.getItemId()){
             case R.id.logout:
@@ -524,8 +471,6 @@ public class MapsActivity extends AppCompatActivity
             }
         }
     }
-
-    // [END maps_current_place_update_location_ui]
 
    public static double getDistance(double lat1, double lon1, double lat2, double lon2){
         double r = 6371000;
