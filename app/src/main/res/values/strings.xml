@@ -1,5 +1,4 @@
 <resources>
-
     <string name="app_name">PantaGo</string>
     <string name="go_to_maps">Go to maps</string>
     <string name="title_activity_maps">Map</string>
@@ -57,4 +56,5 @@
     <string name="sign_up"><u>Opret dig</u></string>
     <string name="login">Log ind</string>
     <string name="continue_with_facebook">Fortsæt med Facebook</string>
+    <string name="amount_pant">Antal pant: </string>
 </resources>

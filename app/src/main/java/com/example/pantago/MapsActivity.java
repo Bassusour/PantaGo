@@ -262,7 +262,7 @@ public class MapsActivity extends AppCompatActivity
                 LatLng latlng = new LatLng(latitude, longitude);
                 Marker mark = mMap.addMarker(new MarkerOptions().position(latlng)
                         .title(address)
-                        .snippet("Antal pant: " + pant.getQuantity())
+                        .snippet(getResources().getString(R.string.amount_pant) + pant.getQuantity())
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
                 mark.setTag(pant);
                 markerMap.put(pant.getPantKey(), mark);
@@ -589,7 +589,7 @@ public class MapsActivity extends AppCompatActivity
     }
 
     public void zoomToPant(Pant pant){
-        menuItem.setTitle("Liste");
+        menuItem.setTitle(getResources().getString(R.string.list));
        FragmentTransaction transaction = fragmentManager.beginTransaction();
        transaction.setCustomAnimations(R.anim.slidein, R.anim.slideout);
        transaction.remove( listFragment);
