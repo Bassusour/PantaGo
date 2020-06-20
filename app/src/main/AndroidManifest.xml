@@ -47,9 +47,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            android:screenOrientation="portrait"
         </activity>
-        <activity android:name=".ClaimActivity" />
-        <activity android:name=".UploadActivity" />
+        <activity android:name=".ClaimActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".UploadActivity"
+            android:screenOrientation="portrait"/>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -83,8 +86,8 @@
         -->
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps" />
-        <activity android:name=".MainActivity"></activity>
+            android:label="@string/title_activity_maps"
+            android:screenOrientation="portrait"/>
         <activity android:name=".CreateUserActivity" />
     </application>
 
