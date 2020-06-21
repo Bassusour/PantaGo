@@ -521,7 +521,12 @@ public class MapsActivity extends AppCompatActivity
                 } else {
                     maxDist = 1000000.0;
                 }
-                if (pant.getClaimerUID().equals("") && pant.getQuantity() >= minP && dist < maxDist) {
+
+                if(pant.getClaimerUID().equals("") && currentUser.getUid().equals(pant.getOwnerUID())){
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE));
+                    markerMap.get(pant.getPantKey()).setVisible(true);
+                    listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
+                }else if (pant.getClaimerUID().equals("") && pant.getQuantity() >= minP && dist < maxDist) {
                     markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                     markerMap.get(pant.getPantKey()).setVisible(true);
                     listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
