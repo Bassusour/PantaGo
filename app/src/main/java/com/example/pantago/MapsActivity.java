@@ -238,7 +238,7 @@ public class MapsActivity extends AppCompatActivity
                         decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
                  }
                 }
-            }½
+            }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
