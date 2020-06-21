@@ -39,6 +39,7 @@
         map:layout_constraintStart_toStartOf="parent"
         map:layout_constraintTop_toTopOf="parent"
         android:layout_gravity="center_horizontal|bottom"
+
         />
 
     </fragment>

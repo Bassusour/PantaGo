@@ -126,6 +126,9 @@ public class MapsActivity extends AppCompatActivity
     private static DatabaseReference databaseReference;
     private static StorageReference storageReference;
 
+    private int radCheck = 0;
+    private int amountCheck = 0;
+
     ArrayList<Pant> pants;
 
     FragmentManager fragmentManager;
@@ -208,9 +211,11 @@ public class MapsActivity extends AppCompatActivity
         minPant.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.i(TAG, "amount select called");
-                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
-                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                if(++amountCheck > 1){
+                    Log.i(TAG, "amount select called");
+                    for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                        decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                    }
                 }
             }
 
@@ -227,11 +232,13 @@ public class MapsActivity extends AppCompatActivity
         maxRad.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.i(TAG, "radius selected called");
-                for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
-                    decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                if(++radCheck > 1){
+                 Log.i(TAG, "radius selected called");
+                 for (HashMap.Entry<String, Marker> entry : markerMap.entrySet()) {
+                        decideVisible(firebaseAuth.getCurrentUser(), getPantFromKey(entry.getKey()));
+                 }
                 }
-            }
+            }½
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
