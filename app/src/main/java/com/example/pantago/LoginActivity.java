@@ -65,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.email);
         passwordInput = findViewById(R.id.password);
 
-        //Saved state
         if(savedInstanceState != null) {
             emailInput.setText(savedInstanceState.getString(KEY_EMAIL));
             passwordInput.setText(savedInstanceState.getString(KEY_PASSWORD));
@@ -81,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         }
 
-        //Callbackmanager registers the state of the login
+        //CallbackManager gemmer status for login
         mCallbackManager = CallbackManager.Factory.create();
         fbLogin.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -100,11 +99,11 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        //Listener which checks when authenticator changes (login or logout)
+        //Listener der tjekker når authentication skifter (login og logout)
         authStateListener = firebaseAuth -> {
         };
 
-        //Checks if signed in or out
+        //Tjekker om man er signed in eller out
         accessTokenTracker = new AccessTokenTracker() {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
@@ -114,7 +113,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-        //Login with email and password
+        //Login med email og password
         loginBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 String email = emailInput.getText().toString();
@@ -130,7 +129,6 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
-                                    // Sign in success, update UI with the signed-in user's information
                                     Log.d(TAG, "signInWithEmail:success");
                                     FirebaseUser user = mFirebaseAuth.getCurrentUser();
                                     Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
@@ -157,7 +155,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    //Checks validity for facebook credentials
+    //Tjekker facebook login
     private void handleFacebookToken(AccessToken token) {
         Log.d(TAG, "handleFacebookToken"+token);
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());

@@ -46,16 +46,6 @@
             android:hint="@string/prompt_password"
             android:inputType="textPassword" />
 
-        <com.facebook.login.widget.LoginButton
-            xmlns:facebook="http://schemas.android.com/apk/res-auto"
-            facebook:com_facebook_login_text="@string/continue_with_facebook"
-            android:id="@+id/fbLogin"
-            android:layout_width="match_parent"
-            android:layout_height="18dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="5dp" />
-
         <Button
             android:id="@+id/loginButton"
             android:layout_width="match_parent"
@@ -64,6 +54,15 @@
             android:backgroundTint="@color/colorAccent"
             android:text="@string/login"
             android:textColor="#ffffff" />
+
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/fbLogin"
+            android:layout_width="match_parent"
+            android:layout_height="18dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginRight="5dp"
+            app:com_facebook_login_text="@string/continue_with_facebook" />
 
         <LinearLayout
             android:id="@+id/horizontal"
