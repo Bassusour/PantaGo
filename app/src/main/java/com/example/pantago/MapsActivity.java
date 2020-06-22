@@ -503,7 +503,7 @@ public class MapsActivity extends AppCompatActivity
                 }
 
                 if(pant.getClaimerUID().equals("") && currentUser.getUid().equals(pant.getOwnerUID())){
-                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE));
+                    markerMap.get(pant.getPantKey()).setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
                     markerMap.get(pant.getPantKey()).setVisible(true);
                     listFragment.addPant(pant, location.getLatitude(), location.getLongitude());
                 }else if (pant.getClaimerUID().equals("") && pant.getQuantity() >= minP && dist < maxDist) {
