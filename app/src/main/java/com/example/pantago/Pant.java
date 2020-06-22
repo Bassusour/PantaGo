@@ -1,6 +1,5 @@
 package com.example.pantago;
 
-import com.google.android.gms.maps.model.Marker;
 
 public class Pant {
     private String description, image;
@@ -13,7 +12,6 @@ public class Pant {
 
     public Pant(String description, int quantity, double latitude, double longitude){
         this.description = description;
-        //this.image = image;
         this.quantity = quantity;
         this.longitude = longitude;
         this.latitude = latitude;

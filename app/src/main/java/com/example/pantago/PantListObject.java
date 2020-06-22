@@ -5,9 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.core.view.inputmethod.EditorInfoCompat;
 
-import com.google.android.gms.maps.model.Marker;
 
 import java.io.ByteArrayOutputStream;
 
