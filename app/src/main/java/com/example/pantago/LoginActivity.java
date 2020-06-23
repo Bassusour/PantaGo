@@ -80,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         }
 
-        //CallbackManager gemmer status for login
+        //CALLBACKMANAGER
         mCallbackManager = CallbackManager.Factory.create();
         fbLogin.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -145,7 +145,6 @@ public class LoginActivity extends AppCompatActivity {
                         });
             }
         });
-
     }
 
     @Override
@@ -155,7 +154,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    //Tjekker facebook login
     private void handleFacebookToken(AccessToken token) {
         Log.d(TAG, "handleFacebookToken"+token);
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
