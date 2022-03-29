@@ -6,3 +6,5 @@ The incentive for users to go out and pick up the cans/bottles is that there is 
 It is very common in inner Copenhagen to see people go around collecting these cans and bottles for the money. Therefore, the idea of this project is that if you are 
 too lazy to deliver your cans to the nearest supermarket, or simply see leftover cans on the street, you can take a picture of them, and post it along with your location to the app.
 This makes it much easier for collectors to pick up cans and bottles. 
+    
+This app supports Google and Facebook accounts, aswell as simply creating your own account. 
